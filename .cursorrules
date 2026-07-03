@@ -1,0 +1,61 @@
+# Project: SystemOS
+
+## What this is
+An AI-powered business operating system for small/medium companies.
+CEOs insert his company information, manage collaborators and tasks,
+and interact with an AI that knows the entire business context.
+
+## Stack
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (database + auth + storage)
+- n8n (AI agent orchestration)
+- Vercel (deployment)
+
+## Language Rules
+- All UI text, labels, buttons, placeholders, messages, and content must be in **Portuguese (PT-BR)**
+- All code (variables, functions, components, files, types) must be in **English**
+- Database table and column names are in **English**
+- Comments in code can be in English or Portuguese — be consistent within the same file
+
+## Architecture
+- Multi-tenant: every table has company_id, enforced via Supabase RLS
+- Auth: Supabase Auth (CEO signs up, collaborators are invited)
+- AI: n8n agent with tools that query Supabase views
+- Storage: Supabase Storage for uploaded documents
+
+## Database main tables
+- i didnt created yet
+
+## Styling Rules
+- Always use the design tokens defined in `src/app/globals.css`
+- Never use hardcoded colors like `#C9A84C` or `hsl(...)` directly in components
+- Always import lucide react icons, never use svg
+- Always use semantic Tailwind classes that reference CSS variables:
+  ```tsx
+  // ✅ correct
+  className="bg-background text-foreground"
+  className="bg-card border-border"
+  className="text-primary bg-primary/10"
+
+  // ❌ wrong
+  className="bg-[#0B1220] text-[#EEF1F8]"
+  className="bg-yellow-500"
+  ```
+
+## Code Quality Rules
+- No `console.log` in production code — use proper error handling
+- No commented-out code blocks — delete unused code
+- No hardcoded user IDs, API keys, or secrets in code — use `.env.local`
+- Keep components small and focused — if a component exceeds ~150 lines, split it
+- Reuse components from `components/shared/` before creating new ones
+- Always add loading and empty states to data-fetching components
+
+## Key rules
+- Always use TypeScript
+- Always use Tailwind for styling
+- Always use Supabase RLS — never expose data across companies
+- App Router only — no pages directory
+- Server components by default, client components only when needed
+- Never hardcode colors — always use the design tokens above
