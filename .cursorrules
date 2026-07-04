@@ -25,6 +25,9 @@ and interact with an AI that knows the entire business context.
 - AI: n8n agent with tools that query Supabase views
 - Storage: Supabase Storage for uploaded documents
 
+## Database tables
+- Always read src/lib/supabase/schema.md to understand the current database schema
+
 ## Database main tables
 - i didnt created yet
 
