@@ -1,7 +1,8 @@
 import { CollaboratorsHub } from "@/components/collaborators/collaborators-hub";
-import type { CollaboratorArea } from "@/components/collaborators/types";
+import type { Collaborator, CollaboratorArea } from "@/components/collaborators/types";
 import { Sidebar } from "@/components/shared/sidebar";
 import { GetCollaboratorAreas } from "@/lib/lib-area";
+import { GetCollaborators } from "@/lib/lib-collaborator";
 import { createClient } from "@/lib/supabase/server";
 import { Bell } from "lucide-react";
 
@@ -11,8 +12,8 @@ export default async function CollaboratorsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let companyId = "";
   let initialAreas: CollaboratorArea[] = [];
+  let initialCollaborators: Collaborator[] = [];
 
   if (user) {
     const { data: company } = await supabase
@@ -20,11 +21,15 @@ export default async function CollaboratorsPage() {
       .select("id")
       .eq("owner_id", user.id)
       .single();
-
+    
     if (company) {
-      companyId = String(company.id);
-      const { data: areas } = await GetCollaboratorAreas(supabase, company.id);
-      initialAreas = areas ?? [];
+      const [areasResult, collaboratorsResult] = await Promise.all([
+        GetCollaboratorAreas(supabase, company.id),
+        GetCollaborators(supabase, company.id),
+      ]);
+
+      initialAreas = areasResult.data ?? [];
+      initialCollaborators = collaboratorsResult.data ?? [];
     }
   }
 
@@ -54,7 +59,8 @@ export default async function CollaboratorsPage() {
         <main className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="mx-auto w-full max-w-2xl">
             <CollaboratorsHub
-              initialAreas={initialAreas ?? []}
+              initialAreas={initialAreas}
+              initialCollaborators={initialCollaborators}
             />
           </div>
         </main>

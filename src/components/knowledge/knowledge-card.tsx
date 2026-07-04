@@ -1,13 +1,14 @@
-import type { KnowledgeCardData } from "./types";
-import { getCategoryItemCount } from "./types";
+import type { KnowledgeCategory } from "./types";
+import { getCategoryContentLabel } from "./types";
 
 type KnowledgeCardProps = {
-  card: KnowledgeCardData;
+  category: KnowledgeCategory;
+  content?: string;
   onClick: () => void;
 };
 
-export function KnowledgeCard({ card, onClick }: KnowledgeCardProps) {
-  const itemCount = getCategoryItemCount(card);
+export function KnowledgeCard({ category, content, onClick }: KnowledgeCardProps) {
+  const contentLabel = getCategoryContentLabel(content);
 
   return (
     <button
@@ -21,11 +22,11 @@ export function KnowledgeCard({ card, onClick }: KnowledgeCardProps) {
       <div className="flex items-start gap-2.5">
         <div className="min-w-0 flex-1">
           <p className="text-foreground group-hover:text-primary truncate text-sm font-semibold tracking-wide transition-colors duration-300">
-            {card.title}
+            {category.name}
           </p>
           <p className="text-muted-foreground mt-0.5 text-xs">
             <span className="bg-muted-foreground/15 text-muted-foreground inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium">
-              {itemCount} {itemCount === 1 ? "item" : "itens"}
+              {contentLabel}
             </span>
           </p>
         </div>

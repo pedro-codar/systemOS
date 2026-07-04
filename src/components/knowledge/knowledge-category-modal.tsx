@@ -1,14 +1,14 @@
 "use client";
 
+import type { NewCategoryData } from "@/components/knowledge/types";
 import { X } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AutoResizeTextarea } from "./auto-resize-textarea";
-import type { NewCategoryData } from "./types";
 
 type KnowledgeCategoryModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: NewCategoryData) => void;
+  onSave: (data: NewCategoryData) => Promise<void>;
 };
 
 export function KnowledgeCategoryModal({
@@ -17,13 +17,13 @@ export function KnowledgeCategoryModal({
   onSave,
 }: KnowledgeCategoryModalProps) {
   const titleId = useId();
-  const descriptionId = useId();
-  const titleRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    titleRef.current?.focus();
+    nameRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -35,17 +35,24 @@ export function KnowledgeCategoryModal({
 
   if (!isOpen) return null;
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const title = String(formData.get("title") ?? "").trim();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = String(formData.get("name") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();
 
-    if (!title) return;
+    if (!name || isSubmitting) return;
 
-    onSave({ title, description });
-    event.currentTarget.reset();
-    onClose();
+    setIsSubmitting(true);
+
+    try {
+      await onSave({ name, description });
+      form.reset();
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -86,13 +93,13 @@ export function KnowledgeCategoryModal({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label htmlFor="category-title" className="text-foreground text-sm font-medium">
-              Título
+            <label htmlFor="category-name" className="text-foreground text-sm font-medium">
+              Nome
             </label>
             <input
-              ref={titleRef}
-              id="category-title"
-              name="title"
+              ref={nameRef}
+              id="category-name"
+              name="name"
               type="text"
               required
               placeholder="Ex: Fornecedores"
@@ -117,15 +124,17 @@ export function KnowledgeCategoryModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={isSubmitting}
               className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg shadow-primary/20 transition-colors"
+              disabled={isSubmitting}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg shadow-primary/20 transition-colors"
             >
-              Salvar
+              {isSubmitting ? "Salvando..." : "Salvar"}
             </button>
           </div>
         </form>

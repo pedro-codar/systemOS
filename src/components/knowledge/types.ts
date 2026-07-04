@@ -1,26 +1,32 @@
-export type KnowledgeInformation = {
+// knowledge category
+export interface KnowledgeCategory {
   id: string;
-  title: string;
+  created_at: Date;
+  company_id: string;
+  name: string;
   description: string;
-};
+}
 
-export type KnowledgeCardData = {
+// knowledge entrie
+export interface KnowledgeEntries {
   id: string;
-  title: string;
-  description: string;
-  informations: KnowledgeInformation[];
-};
+  created_at: Date;
+  company_id: string;
+  knowledge_category_id: string;
+  content_plain: string;
+  updated_at: Date;
+}
 
 export type NewCategoryData = {
-  title: string;
+  name: string;
   description: string;
 };
 
-export type NewInformationData = {
-  title: string;
-  description: string;
-};
+export function categoryHasContent(content: string | undefined) {
+  const stripped = content?.replace(/<[^>]*>/g, "").trim();
+  return Boolean(stripped);
+}
 
-export function getCategoryItemCount(category: KnowledgeCardData) {
-  return category.informations.length;
+export function getCategoryContentLabel(content: string | undefined) {
+  return categoryHasContent(content) ? "Com conteúdo" : "Vazio";
 }

@@ -11,7 +11,7 @@
 | `avatar_url` | `text` |  Nullable |
 | `whatsapp` | `text` |  Nullable |
 | `role` | `COMPANY_MEMBER_ROLE` |  |
-| `company_id` | `int8` |  |
+| `company_id` | `int8` |  Nullable |
 | `company_member_area_id` | `int8` |  Nullable |
 
 ## Table `company`
@@ -36,3 +36,30 @@
 | `created_at` | `timestamptz` |  |
 | `company_id` | `int8` |  Nullable |
 | `name` | `text` |  Nullable |
+
+## Table `knowledge_category`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int8` | Primary Identity |
+| `created_at` | `timestamptz` |  |
+| `company_id` | `int8` |  |
+| `name` | `text` |  |
+| `description` | `text` |  Nullable |
+
+## Table `knowledge_entries`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int8` | Primary Identity |
+| `created_at` | `timestamptz` |  |
+| `company_id` | `int8` |  |
+| `knowledge_category_id` | `int8` |  |
+| `content_plain` | `text` |  |
+| `updated_at` | `timestamptz` |  |
+| `embedding` | `vector` |  Nullable |
+| `content_formatted` | `text` |  Nullable |

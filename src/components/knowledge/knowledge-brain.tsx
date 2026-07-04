@@ -1,13 +1,24 @@
 "use client";
 
+import { useAppContext } from "@/context/app-context";
+import { triggerEmbedding } from "@/actions/knowledge";
+import {
+  CreateKnowledgeCategory,
+  DeleteKnowledgeCategory,
+} from "@/lib/lib-knowledge-category";
+import {
+  CreateKnowledgeEntrie,
+  UpdateKnowledgeEntrie,
+} from "@/lib/lib-knowledge-entries";
 import { Plus } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { KnowledgeCard } from "./knowledge-card";
 import { KnowledgeCategoryDetailModal } from "./knowledge-category-detail-modal";
 import { KnowledgeCategoryModal } from "./knowledge-category-modal";
 import { KnowledgeHub } from "./knowledge-hub";
-import type { KnowledgeCardData, NewCategoryData, NewInformationData } from "./types";
-
+import type { KnowledgeCategory, NewCategoryData } from "./types";
 const ADD_BUTTON_TARGET_ANGLE = 180;
 const CARD_WIDTH = 144;
 const CARD_HEIGHT = 64;
@@ -17,42 +28,13 @@ const HUB_HALF_HEIGHT = 92;
 const CONNECTOR_GAP = 16;
 const ADD_BUTTON_RADIUS = 40;
 
-const INITIAL_CARDS: KnowledgeCardData[] = [
-  {
-    id: "1",
-    title: "FORNECEDORES",
-    description: "Todos os fornecedores, contatos e condições de pagamento.",
-    informations: [
-      {
-        id: "i1",
-        title: "Gráfica Norte — fornecedor de papel",
-        description:
-          "Contato: João Silva — joao@graficanorte.com — (11) 99999-9999. Entrega toda terça-feira. Pedido mínimo R$500. Pagamento em 30 dias. Bom para pedidos urgentes, ligar direto.",
-      },
-      {
-        id: "i2",
-        title: "TechParts Ltda — componentes eletrônicos",
-        description:
-          "Contato: Maria Santos — maria@techparts.com.br — (11) 98888-8888. Entrega em 5 dias úteis. Pagamento à vista com 5% de desconto.",
-      },
-    ],
-  },
-  {
-    id: "2",
-    title: "Cultura",
-    description: "Valores, missão e cultura organizacional.",
-    informations: [],
-  },
-  {
-    id: "3",
-    title: "marketing",
-    description: "Estratégias, campanhas e materiais de marketing.",
-    informations: [],
-  },
-];
+type KnowledgeBrainProps = {
+  initialCategories: KnowledgeCategory[];
+  initialEntryContent: Record<string, string>;
+  initialEntryIds: Record<string, string>;
+};
 
-function normalizeAngle(angle: number) {
-  const normalized = angle % 360;
+function normalizeAngle(angle: number) {  const normalized = angle % 360;
   return normalized < 0 ? normalized + 360 : normalized;
 }
 
@@ -177,35 +159,55 @@ function ConnectorLine({ x1, y1, x2, y2 }: ConnectorLineProps) {
   );
 }
 
-export function KnowledgeBrain() {
-  const [cards, setCards] = useState<KnowledgeCardData[]>(INITIAL_CARDS);
+export function KnowledgeBrain({
+  initialCategories,
+  initialEntryContent,
+  initialEntryIds,
+}: KnowledgeBrainProps) {
+  const router = useRouter();
+  const { companyId, company } = useAppContext();
+  const [categories, setCategories] = useState(initialCategories);
+  const [categoryContent, setCategoryContent] = useState(initialEntryContent);
+  const [entryIds, setEntryIds] = useState(initialEntryIds);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  const layout = useMemo(() => computeLayout(cards.length), [cards.length]);
+  useEffect(() => {
+    setCategories(initialCategories);
+  }, [initialCategories]);
+
+  useEffect(() => {
+    setCategoryContent(initialEntryContent);
+    setEntryIds(initialEntryIds);
+  }, [initialEntryContent, initialEntryIds]);
+
+  const layout = useMemo(() => computeLayout(categories.length), [categories.length]);
   const center = layout.canvasSize / 2;
 
   const selectedCategory = useMemo(
-    () => cards.find((card) => card.id === selectedCategoryId) ?? null,
-    [cards, selectedCategoryId],
+    () => categories.find((category) => category.id === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId],
   );
+
+  const selectedCategoryContent = selectedCategory
+    ? categoryContent[selectedCategory.id] ?? ""
+    : "";
 
   const cardPositions = useMemo(
     () =>
-      cards.map((card, index) => {
+      categories.map((category, index) => {
         const angle = layout.cardAngles[index];
         const orbitRadius = layout.cardOrbitRadii[index];
 
         return {
-          card,
+          category,
           angle,
           orbitRadius,
           ...polarToPosition(angle, orbitRadius),
         };
       }),
-    [cards, layout.cardAngles, layout.cardOrbitRadii],
+    [categories, layout.cardAngles, layout.cardOrbitRadii],
   );
-
   const addButtonPosition = polarToPosition(layout.addAngle, layout.addOrbitRadius);
 
   const handleOpenCreateModal = useCallback(() => {
@@ -224,64 +226,112 @@ export function KnowledgeBrain() {
     setSelectedCategoryId(null);
   }, []);
 
-  const handleSaveCategory = useCallback((data: NewCategoryData) => {
-    setCards((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        title: data.title,
-        description: data.description,
-        informations: [],
-      },
-    ]);
-  }, []);
+  const handleSaveCategory = useCallback(
+    async (data: NewCategoryData) => {
+      if (!companyId) {
+        toast.error("Empresa não encontrada.");
+        return;
+      }
 
-  const handleAddInformation = useCallback(
-    (categoryId: string, data: NewInformationData) => {
-      setCards((prev) =>
-        prev.map((card) =>
-          card.id === categoryId
-            ? {
-                ...card,
-                informations: [
-                  ...card.informations,
-                  {
-                    id: crypto.randomUUID(),
-                    title: data.title,
-                    description: data.description,
-                  },
-                ],
-              }
-            : card,
-        ),
+      const { data: category, error } = await CreateKnowledgeCategory(
+        data.name,
+        data.description,
+        companyId,
       );
+
+      if (error || !category) {
+        toast.error("Não foi possível criar a categoria.");
+        return;
+      }
+
+      toast.success("Categoria criada com sucesso.");
+      router.refresh();
     },
-    [],
+    [companyId, router],
   );
 
-  const handleDeleteInformation = useCallback(
-    (categoryId: string, informationId: string) => {
-      setCards((prev) =>
-        prev.map((card) =>
-          card.id === categoryId
-            ? {
-                ...card,
-                informations: card.informations.filter(
-                  (information) => information.id !== informationId,
-                ),
-              }
-            : card,
-        ),
-      );
+  const handleSaveContent = useCallback(
+    async (categoryId: string, content: string): Promise<boolean> => {
+      if (!companyId) {
+        toast.error("Empresa não encontrada.");
+        return false;
+      }
+
+      const existingEntryId = entryIds[categoryId];
+      const updatedAt = new Date();
+
+      if (existingEntryId) {
+        const { error } = await UpdateKnowledgeEntrie(existingEntryId, content, updatedAt);
+
+        if (error) {
+          toast.error("Não foi possível salvar o conteúdo.");
+          return false;
+        }
+
+        const embeddingResult = await triggerEmbedding(Number(existingEntryId));
+        if (embeddingResult?.error) {
+          toast.warning("Conteúdo salvo, mas a indexação falhou.");
+        } else {
+          toast.success("Conteúdo salvo com sucesso.");
+        }
+      } else {
+        const stripped = content.replace(/<[^>]*>/g, "").trim();
+        if (!stripped) return true;
+
+        const { data, error } = await CreateKnowledgeEntrie(
+          companyId,
+          categoryId,
+          content,
+          updatedAt,
+        );
+
+        if (error || !data) {
+          toast.error("Não foi possível salvar o conteúdo.");
+          return false;
+        }
+
+        setEntryIds((prev) => ({ ...prev, [categoryId]: String(data.id) }));
+
+        const embeddingResult = await triggerEmbedding(data.id);
+        if (embeddingResult?.error) {
+          toast.warning("Conteúdo salvo, mas a indexação falhou.");
+        } else {
+          toast.success("Conteúdo salvo com sucesso.");
+        }
+      }
+
+      setCategoryContent((prev) => ({ ...prev, [categoryId]: content }));
+      router.refresh();
+      return true;
     },
-    [],
+    [companyId, entryIds, router],
   );
 
-  const handleDeleteCategory = useCallback((categoryId: string) => {
-    setCards((prev) => prev.filter((card) => card.id !== categoryId));
-    setSelectedCategoryId(null);
-  }, []);
+  const handleDeleteCategory = useCallback(
+    async (categoryId: string) => {
+      const { error } = await DeleteKnowledgeCategory(categoryId);
 
+      if (error) {
+        toast.error("Não foi possível excluir a categoria.");
+        return;
+      }
+
+      setCategoryContent((prev) => {
+        const next = { ...prev };
+        delete next[categoryId];
+        return next;
+      });
+      setEntryIds((prev) => {
+        const next = { ...prev };
+        delete next[categoryId];
+        return next;
+      });
+      setSelectedCategoryId(null);
+      toast.success("Categoria excluída com sucesso.");
+      router.refresh();
+    },
+    [router],
+  );
   return (
     <>
       <KnowledgeCategoryModal
@@ -292,12 +342,11 @@ export function KnowledgeBrain() {
 
       <KnowledgeCategoryDetailModal
         category={selectedCategory}
+        content={selectedCategoryContent}
         onClose={handleCloseCategoryDetail}
-        onAddInformation={handleAddInformation}
-        onDeleteInformation={handleDeleteInformation}
+        onSaveContent={handleSaveContent}
         onDeleteCategory={handleDeleteCategory}
       />
-
     <div className="border-primary/15 shadow-primary/5 relative h-full min-h-0 w-full flex-1 overflow-auto rounded-2xl border shadow-inner">
       <div
         className="relative overflow-hidden"
@@ -347,7 +396,7 @@ export function KnowledgeBrain() {
               className="text-primary pointer-events-none absolute inset-0 z-0 h-full w-full overflow-visible"
               aria-hidden
             >
-              {cardPositions.map(({ card, angle, orbitRadius }) => {
+              {cardPositions.map(({ category, angle, orbitRadius }) => {
                 const { start, end } = getConnectorPoints(
                   angle,
                   orbitRadius,
@@ -356,8 +405,7 @@ export function KnowledgeBrain() {
 
                 return (
                   <ConnectorLine
-                    key={card.id}
-                    x1={center + start.x}
+                    key={category.id}                    x1={center + start.x}
                     y1={center + start.y}
                     x2={center + end.x}
                     y2={center + end.y}
@@ -384,22 +432,21 @@ export function KnowledgeBrain() {
             </svg>
 
             <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-              <KnowledgeHub />
+              <KnowledgeHub companyName={company?.name ?? "Sua empresa"} />
             </div>
-
-            {cardPositions.map(({ card, x, y }) => (
+            {cardPositions.map(({ category, x, y }) => (
               <div
-                key={card.id}
+                key={category.id}
                 className="absolute top-1/2 left-1/2 z-10 transition-transform duration-300 ease-out"
                 style={{ transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` }}
               >
                 <KnowledgeCard
-                  card={card}
-                  onClick={() => handleOpenCategoryDetail(card.id)}
+                  category={category}
+                  content={categoryContent[category.id]}
+                  onClick={() => handleOpenCategoryDetail(category.id)}
                 />
               </div>
             ))}
-
             <div
               className="absolute top-1/2 left-1/2 z-10 transition-transform duration-300 ease-out"
               style={{

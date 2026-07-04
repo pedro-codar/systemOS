@@ -1,8 +1,10 @@
 import { Brain } from "lucide-react";
 
-const COMPANY_NAME = "Foco em Layout Inc.";
+type KnowledgeHubProps = {
+  companyName: string;
+};
 
-export function KnowledgeHub() {
+export function KnowledgeHub({ companyName }: KnowledgeHubProps) {
   return (
     <div className="relative">
       <div
@@ -25,7 +27,7 @@ export function KnowledgeHub() {
           Empresa
         </span>
         <h2 className="from-foreground via-foreground to-primary mt-1.5 bg-gradient-to-br bg-clip-text text-center text-lg font-bold tracking-tight text-transparent">
-          {COMPANY_NAME}
+          {companyName}
         </h2>
 
         <div className="mt-4 flex items-center gap-1.5">

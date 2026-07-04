@@ -1,51 +1,35 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { CollaboratorModal } from "./collaborator-modal";
 import { CollaboratorsList } from "./collaborators-list";
 import type { Collaborator, CollaboratorArea } from "./types";
-import { useAppContext } from "@/context/app-context"
+import { useAppContext } from "@/context/app-context";
 import { InviteNewUser } from "@/lib/lib-auth";
-const INITIAL_COLLABORATORS: Collaborator[] = [
-  {
-    id: "1",
-    name: "Marina Costa",
-    email: "marina@focoyemlayout.com",
-    status: "active",
-    invitedAt: "12/06/2026",
-  },
-  {
-    id: "2",
-    name: "Lucas Almeida",
-    email: "lucas@focoyemlayout.com",
-    status: "active",
-    invitedAt: "18/06/2026",
-  },
-  {
-    id: "3",
-    name: "Ana Ribeiro",
-    email: "ana@focoyemlayout.com",
-    status: "pending",
-    invitedAt: "01/07/2026",
-  },
-];
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString("pt-BR");
-}
 
 type CollaboratorsHubProps = {
   initialAreas: CollaboratorArea[];
+  initialCollaborators: Collaborator[];
 };
 
-export function CollaboratorsHub({ initialAreas }: CollaboratorsHubProps) {
-  const [collaborators, setCollaborators] = useState(INITIAL_COLLABORATORS);
+export function CollaboratorsHub({
+  initialAreas,
+  initialCollaborators,
+}: CollaboratorsHubProps) {
+  const router = useRouter();
+  const [collaborators, setCollaborators] = useState(initialCollaborators);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { companyId } = useAppContext()
+  const { companyId } = useAppContext();
+
+  useEffect(() => {
+    setCollaborators(initialCollaborators);
+  }, [initialCollaborators]);
 
   const handleInvite = async (name: string, email: string, areaId: string) => {
     await InviteNewUser(name, email, areaId);
+    router.refresh();
   };
 
   return (
@@ -74,7 +58,7 @@ export function CollaboratorsHub({ initialAreas }: CollaboratorsHubProps) {
         onClose={() => setIsModalOpen(false)}
         onInvite={handleInvite}
         initialAreas={initialAreas}
-        companyId={String(companyId)}
+        companyId={companyId ?? ""}
       />
     </>
   );
