@@ -63,3 +63,43 @@
 | `updated_at` | `timestamptz` |  |
 | `embedding` | `vector` |  Nullable |
 | `content_formatted` | `text` |  Nullable |
+
+## Table `chat_conversation`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int8` | Primary Identity |
+| `created_at` | `timestamptz` |  |
+| `company_id` | `int8` |  |
+| `profile_id` | `uuid` |  Unique |
+
+## Table `chat_message`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int8` | Primary Identity |
+| `created_at` | `timestamptz` |  |
+| `chat_conversation_id` | `int8` |  Nullable |
+| `role` | `CHAT_MESSAGE_ROLE` |  |
+| `content` | `text` |  Nullable |
+
+## Table `task`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int8` | Primary Identity |
+| `created_at` | `timestamptz` |  |
+| `company_id` | `int8` |  |
+| `title` | `text` |  |
+| `description` | `text` |  |
+| `status` | `TASK_STATUS` |  | -> (pending, in_progress, completed)
+| `completed_at` | `timestamptz` |  Nullable |
+| `assigned_to` | `uuid` |  |
+| `created_by` | `uuid` |  |
+| `deadline` | `timestamptz` |  Nullable |

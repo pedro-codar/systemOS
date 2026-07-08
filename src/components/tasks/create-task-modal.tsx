@@ -1,46 +1,90 @@
 "use client";
 
-import { X } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
-import { AutoResizeTextarea } from "@/components/knowledge/auto-resize-textarea";
-import type { NewTaskData } from "./types";
+import { Loader2, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { AssigneeSelect } from "./assignee-select";
+import type { NewTaskData, TaskAssignee } from "./types";
 
 type CreateTaskModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: NewTaskData) => void;
+  onCreate: (data: NewTaskData) => Promise<boolean>;
+  assignees: TaskAssignee[];
+  currentUserId: string;
+  canSelectAssignee: boolean;
 };
 
-export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalProps) {
+export function CreateTaskModal({
+  isOpen,
+  onClose,
+  onCreate,
+  assignees,
+  currentUserId,
+  canSelectAssignee,
+}: CreateTaskModalProps) {
   const titleId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const [assignedTo, setAssignedTo] = useState(currentUserId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const descriptionMaxHeight = 200;
+
+  function resizeDescriptionField() {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, descriptionMaxHeight);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > descriptionMaxHeight ? "auto" : "hidden";
+  }
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setAssignedTo(currentUserId);
+      setIsSubmitting(false);
+      return;
+    }
 
     titleRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !isSubmitting) onClose();
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, currentUserId, isSubmitting]);
 
   if (!isOpen) return null;
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const title = String(formData.get("title") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();
     const deadline = String(formData.get("deadline") ?? "").trim();
+    const assigneeId = canSelectAssignee
+      ? String(formData.get("assignedTo") ?? "").trim()
+      : currentUserId;
 
-    if (!title || !deadline) return;
+    if (!title || !deadline || !assigneeId) return;
 
-    onCreate({ title, description, deadline });
-    event.currentTarget.reset();
+    setIsSubmitting(true);
+    const success = await onCreate({
+      title,
+      description,
+      deadline,
+      assignedTo: assigneeId,
+    });
+    setIsSubmitting(false);
+
+    if (!success) return;
+
+    form.reset();
+    setAssignedTo(currentUserId);
     onClose();
   }
 
@@ -52,7 +96,7 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
         type="button"
         aria-label="Fechar modal"
         className="absolute inset-0 bg-background/70 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={() => !isSubmitting && onClose()}
       />
 
       <div
@@ -74,7 +118,8 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
             type="button"
             aria-label="Fechar"
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-2 transition-colors"
+            disabled={isSubmitting}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 rounded-lg p-2 transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -91,8 +136,9 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
               name="title"
               type="text"
               required
+              disabled={isSubmitting}
               placeholder="Ex: Revisar proposta comercial"
-              className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2"
+              className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 disabled:opacity-50 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2"
             />
           </div>
 
@@ -100,14 +146,29 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
             <label htmlFor="task-description" className="text-foreground text-sm font-medium">
               Descrição
             </label>
-            <AutoResizeTextarea
+            <textarea
+              ref={descriptionRef}
               id="task-description"
               name="description"
               rows={3}
+              disabled={isSubmitting}
               placeholder="Descreva o que precisa ser feito..."
-              className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 min-h-[80px] w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2"
+              onInput={resizeDescriptionField}
+              className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 min-h-[80px] w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2 disabled:opacity-50"
             />
           </div>
+
+          {canSelectAssignee ? (
+            <AssigneeSelect
+              assignees={assignees}
+              currentUserId={currentUserId}
+              value={assignedTo}
+              onChange={setAssignedTo}
+              disabled={isSubmitting}
+            />
+          ) : (
+            <input type="hidden" name="assignedTo" value={currentUserId} />
+          )}
 
           <div className="flex flex-col gap-2">
             <label htmlFor="task-deadline" className="text-foreground text-sm font-medium">
@@ -119,7 +180,8 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
               type="date"
               required
               min={today}
-              className="border-border bg-background text-foreground focus:border-primary/50 focus:ring-primary/20 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2 [color-scheme:dark]"
+              disabled={isSubmitting}
+              className="border-border bg-background text-foreground focus:border-primary/50 focus:ring-primary/20 disabled:opacity-50 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2 [color-scheme:dark]"
             />
           </div>
 
@@ -127,15 +189,18 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
             <button
               type="button"
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+              disabled={isSubmitting}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+              disabled={isSubmitting || (canSelectAssignee && assignees.length === 0)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
             >
-              Criar tarefa
+              {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+              {isSubmitting ? "Criando..." : "Criar tarefa"}
             </button>
           </div>
         </form>

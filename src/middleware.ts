@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const authEntryRoutes = ['/auth/login', '/auth/signup']
-const authRoutes = ['/chat', '/knowledge', '/collaborators', '/tasks', '/calendar', '/skills']
+const authRoutes = ['/chat', '/knowledge', '/collaborators', '/tasks', '/calendar', '/integrations']
 
 function isProtectedRoute(pathname: string) {
   return authRoutes.some(

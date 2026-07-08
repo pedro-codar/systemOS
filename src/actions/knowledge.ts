@@ -19,7 +19,7 @@ export async function triggerEmbedding(entry_id: number) {
   if (!entry) return { error: 'Entry not found' }
 
   // safe to call n8n now
-  await fetch(process.env.N8N_WEBHOOK_URL!, {
+  await fetch(process.env.N8N_WEBHOOK_URL_KNOWLEDGE!, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

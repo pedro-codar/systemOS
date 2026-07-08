@@ -31,3 +31,15 @@ export function isDeadlineSoon(isoDate: string) {
   const diffDays = (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
   return diffDays >= 0 && diffDays <= 3;
 }
+
+export function isCompletedInCurrentMonth(completedAt: string | null) {
+  if (!completedAt) return false;
+
+  const completedDate = new Date(completedAt);
+  const now = new Date();
+
+  return (
+    completedDate.getFullYear() === now.getFullYear() &&
+    completedDate.getMonth() === now.getMonth()
+  );
+}

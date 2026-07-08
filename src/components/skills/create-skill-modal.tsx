@@ -2,7 +2,6 @@
 
 import { X } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
-import { AutoResizeTextarea } from "@/components/knowledge/auto-resize-textarea";
 import type { NewSkillData } from "./types";
 
 type CreateSkillModalProps = {
@@ -22,6 +21,19 @@ function normalizeTrigger(value: string) {
 export function CreateSkillModal({ isOpen, onClose, onCreate }: CreateSkillModalProps) {
   const titleId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+
+  const promptMaxHeight = 240;
+
+  function resizePromptField() {
+    const textarea = promptRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, promptMaxHeight);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > promptMaxHeight ? "auto" : "hidden";
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -140,12 +152,14 @@ export function CreateSkillModal({ isOpen, onClose, onCreate }: CreateSkillModal
             <p className="text-muted-foreground text-xs">
               Instruções completas que o assistente seguirá ao executar esta skill.
             </p>
-            <AutoResizeTextarea
+            <textarea
+              ref={promptRef}
               id="skill-prompt"
               name="prompt"
               rows={6}
               required
               placeholder="Descreva passo a passo o que o assistente deve fazer quando esta skill for acionada..."
+              onInput={resizePromptField}
               className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 min-h-[140px] w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2"
             />
           </div>

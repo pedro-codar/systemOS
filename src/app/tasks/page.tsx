@@ -1,8 +1,49 @@
 import { Sidebar } from "@/components/shared/sidebar";
 import { TasksBoard } from "@/components/tasks/tasks-board";
+import type { Task, TaskAssignee } from "@/components/tasks/types";
+import { GetTaskAssignees, GetTasks } from "@/lib/lib-task";
+import { createClient } from "@/lib/supabase/server";
 import { Bell } from "lucide-react";
 
-export default function TasksPage() {
+export default async function TasksPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let initialTasks: Task[] = [];
+  let assignees: TaskAssignee[] = [];
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profile")
+      .select("company_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    let companyId = profile?.company_id;
+
+    if (!companyId) {
+      const { data: company } = await supabase
+        .from("company")
+        .select("id")
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      companyId = company?.id;
+    }
+
+    if (companyId) {
+      const [tasksResult, assigneesResult] = await Promise.all([
+        GetTasks(supabase, companyId),
+        GetTaskAssignees(supabase, companyId, user.id),
+      ]);
+
+      initialTasks = tasksResult.data ?? [];
+      assignees = assigneesResult.data ?? [];
+    }
+  }
+
   return (
     <div className="bg-background flex h-screen overflow-hidden">
       <Sidebar activeItem="tasks" />
@@ -27,7 +68,7 @@ export default function TasksPage() {
         </header>
 
         <main className="flex flex-1 flex-col overflow-hidden px-6 pb-6">
-          <TasksBoard />
+          <TasksBoard initialTasks={initialTasks} assignees={assignees} />
         </main>
       </div>
     </div>

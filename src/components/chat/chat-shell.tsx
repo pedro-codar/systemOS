@@ -1,18 +1,107 @@
 "use client";
 
 import { Bell, FileText } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BriefingSidebar } from "@/components/chat/briefing-sidebar";
 import { ChatInput } from "@/components/chat/chat-input";
-import { ChatMessage, type ChatMessageData } from "@/components/chat/chat-message";
+import { ChatMessagesList } from "@/components/chat/chat-messages-list";
+import {
+  GetChatMessagesBefore,
+  GetChatMessagesRecent,
+  mergeChatMessages,
+  type ChatMessage,
+} from "@/lib/lib-chat-message";
+import { createClient } from "@/lib/supabase/client";
 import { Sidebar } from "@/components/shared/sidebar";
 
+const AGENT_RESPONSE_TIMEOUT_MS = 60_000;
+
 type ChatShellProps = {
-  messages: ChatMessageData[];
+  conversationId: string;
+  initialMessages: ChatMessage[];
+  initialHasMoreOlder: boolean;
+  userName: string;
+  userRole: "admin" | "collaborator";
 };
 
-export function ChatShell({ messages }: ChatShellProps) {
+export function ChatShell({
+  conversationId,
+  initialMessages,
+  initialHasMoreOlder,
+  userName,
+  userRole,
+}: ChatShellProps) {
   const [isBriefingOpen, setIsBriefingOpen] = useState(true);
+  const [messages, setMessages] = useState(initialMessages);
+  const [hasMoreOlder, setHasMoreOlder] = useState(initialHasMoreOlder);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [isAgentResponding, setIsAgentResponding] = useState(false);
+  const [agentError, setAgentError] = useState<string | null>(null);
+  const agentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearAgentTimeout = useCallback(() => {
+    if (agentTimeoutRef.current) {
+      clearTimeout(agentTimeoutRef.current);
+      agentTimeoutRef.current = null;
+    }
+  }, []);
+
+  const endAgentResponse = useCallback(() => {
+    clearAgentTimeout();
+    setIsAgentResponding(false);
+    setAgentError(null);
+  }, [clearAgentTimeout]);
+
+  const startAgentResponse = useCallback(() => {
+    clearAgentTimeout();
+    setAgentError(null);
+    setIsAgentResponding(true);
+
+    agentTimeoutRef.current = setTimeout(() => {
+      setIsAgentResponding(false);
+      setAgentError("Não foi possível obter resposta. Tente novamente.");
+    }, AGENT_RESPONSE_TIMEOUT_MS);
+  }, [clearAgentTimeout]);
+
+  useEffect(() => {
+    return () => clearAgentTimeout();
+  }, [clearAgentTimeout]);
+
+  const syncRecentMessages = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await GetChatMessagesRecent(supabase, conversationId);
+
+    if (data) {
+      setMessages((current) => mergeChatMessages(current, data));
+    }
+  }, [conversationId]);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (isLoadingOlder || !hasMoreOlder) {
+      return;
+    }
+
+    const oldestMessage = messages[0];
+    if (!oldestMessage) {
+      return;
+    }
+
+    setIsLoadingOlder(true);
+
+    const supabase = createClient();
+    const { data, hasMore, error } = await GetChatMessagesBefore(
+      supabase,
+      conversationId,
+      oldestMessage.id,
+    );
+
+    if (!error && data) {
+      setMessages((current) => mergeChatMessages(current, data));
+      setHasMoreOlder(hasMore);
+    }
+
+    setIsLoadingOlder(false);
+  }, [conversationId, hasMoreOlder, isLoadingOlder, messages]);
 
   return (
     <div className="bg-background flex h-screen overflow-hidden">
@@ -43,16 +132,29 @@ export function ChatShell({ messages }: ChatShellProps) {
             </button>
           </header>
 
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} message={message} />
-                ))}
-              </div>
-            </div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <ChatMessagesList
+              conversationId={conversationId}
+              messages={messages}
+              setMessages={setMessages}
+              onSyncMessages={syncRecentMessages}
+              onLoadOlderMessages={loadOlderMessages}
+              hasMoreOlder={hasMoreOlder}
+              isLoadingOlder={isLoadingOlder}
+              onAgentResponseReceived={endAgentResponse}
+              isAgentResponding={isAgentResponding}
+              agentError={agentError}
+              userName={userName}
+              userRole={userRole}
+            />
 
-            <ChatInput />
+            <ChatInput
+              conversationId={conversationId}
+              isAgentResponding={isAgentResponding}
+              onMessageSent={syncRecentMessages}
+              onAgentRequestStart={startAgentResponse}
+              onAgentRequestFailed={endAgentResponse}
+            />
           </div>
         </div>
 

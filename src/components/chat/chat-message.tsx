@@ -1,12 +1,7 @@
-export type ChatMessageData = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: string;
-};
+import type { ChatMessage as ChatMessageType } from "@/lib/lib-chat-message";
 
 type ChatMessageProps = {
-  message: ChatMessageData;
+  message: ChatMessageType;
 };
 
 export function ChatMessage({ message }: ChatMessageProps) {

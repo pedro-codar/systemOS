@@ -3,7 +3,6 @@
 import type { NewCategoryData } from "@/components/knowledge/types";
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { AutoResizeTextarea } from "./auto-resize-textarea";
 
 type KnowledgeCategoryModalProps = {
   isOpen: boolean;
@@ -18,7 +17,20 @@ export function KnowledgeCategoryModal({
 }: KnowledgeCategoryModalProps) {
   const titleId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const descriptionMaxHeight = 200;
+
+  function resizeDescriptionField() {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, descriptionMaxHeight);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > descriptionMaxHeight ? "auto" : "hidden";
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -111,11 +123,13 @@ export function KnowledgeCategoryModal({
             <label htmlFor="category-description" className="text-foreground text-sm font-medium">
               Descrição
             </label>
-            <AutoResizeTextarea
+            <textarea
+              ref={descriptionRef}
               id="category-description"
               name="description"
               rows={4}
               placeholder="Descreva o tipo de informação desta categoria..."
+              onInput={resizeDescriptionField}
               className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 resize-none w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2"
             />
           </div>

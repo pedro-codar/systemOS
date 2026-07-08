@@ -1,13 +1,13 @@
 "use client";
 
-import { LogOut, PanelLeft, PanelRight, Brain, MessagesSquare, UserPlus, SquareCheckBig, Calendar, Zap, type LucideIcon } from "lucide-react";
+import { LogOut, PanelLeft, PanelRight, Brain, MessagesSquare, UserPlus, SquareCheckBig, Calendar, Plug2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logout } from "@/lib/lib-auth";
 import { toast } from "sonner";
 
-type SidebarItem = "chat" | "knowledge" | "collaborators" | "tasks" | "calendar" | "skills";
+type SidebarItem = "chat" | "knowledge" | "collaborators" | "tasks" | "calendar" | "integrations";
 
 type SidebarProps = {
   activeItem: SidebarItem;
@@ -45,10 +45,10 @@ const navItems: { id: SidebarItem; label: string; href: string; icon: LucideIcon
     icon: Calendar,
   },
   {
-    id: "skills",
-    label: "Skills",
-    href: "/skills",
-    icon: Zap,
+    id: "integrations",
+    label: "Integrações",
+    href: "/integrations",
+    icon: Plug2,
   },
 ];
 

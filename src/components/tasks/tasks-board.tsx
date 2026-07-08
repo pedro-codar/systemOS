@@ -1,73 +1,27 @@
 "use client";
 
 import { ArrowRight, Circle, CircleCheck, CircleDashed, Plus } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useAppContext } from "@/context/app-context";
+import { CreateTask, DeleteTask, UpdateTask, UpdateTaskStatus, profileToTaskAssignee, withCurrentUserAsAssignee } from "@/lib/lib-task";
 import { CreateTaskModal } from "./create-task-modal";
 import { TaskCard } from "./task-card";
 import { TaskDetailModal } from "./task-detail-modal";
-import type { NewTaskData, Task, TaskStatus } from "./types";
+import type { NewTaskData, Task, TaskAssignee, TaskStatus, UpdateTaskData } from "./types";
 import { TASK_STATUS_LABELS, TASK_STATUS_ORDER } from "./types";
+import { useTasksRealtime } from "./use-tasks-realtime";
+import { isCompletedInCurrentMonth } from "./utils";
 
-const INITIAL_TASKS: Task[] = [
-  {
-    id: "1",
-    title: "Revisar proposta comercial Q3",
-    description:
-      "Analisar valores, condições de pagamento e escopo de entrega antes de enviar ao cliente.",
-    deadline: "2026-07-05",
-    status: "pending",
-    createdAt: "2026-06-28",
-  },
-  {
-    id: "2",
-    title: "Atualizar base de conhecimento",
-    description: "Incluir novos processos de onboarding e políticas internas revisadas.",
-    deadline: "2026-07-08",
-    status: "pending",
-    createdAt: "2026-06-30",
-  },
-  {
-    id: "3",
-    title: "Agendar reunião com equipe de vendas",
-    description: "",
-    deadline: "2026-07-03",
-    status: "pending",
-    createdAt: "2026-07-01",
-  },
-  {
-    id: "4",
-    title: "Implementar dashboard de métricas",
-    description:
-      "Criar visualização de KPIs principais: receita, churn e NPS. Integrar com dados do Supabase.",
-    deadline: "2026-07-15",
-    status: "in_progress",
-    createdAt: "2026-06-20",
-  },
-  {
-    id: "5",
-    title: "Revisar contratos de fornecedores",
-    description: "Verificar cláusulas de renovação e prazos de entrega dos três principais parceiros.",
-    deadline: "2026-07-10",
-    status: "in_progress",
-    createdAt: "2026-06-25",
-  },
-  {
-    id: "6",
-    title: "Configurar integração n8n",
-    description: "Conectar agente de IA com views do Supabase e testar fluxo de respostas.",
-    deadline: "2026-06-25",
-    status: "completed",
-    createdAt: "2026-06-10",
-  },
-  {
-    id: "7",
-    title: "Definir estrutura de colaboradores",
-    description: "Mapear papéis, permissões e fluxo de convite para a plataforma.",
-    deadline: "2026-06-20",
-    status: "completed",
-    createdAt: "2026-06-05",
-  },
-];
+function getColumnTasks(tasks: Task[], status: TaskStatus) {
+  if (status !== "completed") {
+    return tasks.filter((task) => task.status === status);
+  }
+
+  return tasks.filter(
+    (task) => task.status === "completed" && isCompletedInCurrentMonth(task.completedAt),
+  );
+}
 
 const COLUMN_ICONS: Record<TaskStatus, typeof Circle> = {
   pending: CircleDashed,
@@ -78,39 +32,138 @@ const COLUMN_ICONS: Record<TaskStatus, typeof Circle> = {
 const COLUMN_HINTS: Record<TaskStatus, string> = {
   pending: "Aguardando início",
   in_progress: "Em andamento",
-  completed: "Concluídas",
+  completed: "Concluídas neste mês",
 };
 
-function formatDate(date: Date) {
-  return date.toISOString().split("T")[0];
-}
+type TasksBoardProps = {
+  initialTasks: Task[];
+  assignees: TaskAssignee[];
+};
 
-export function TasksBoard() {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
+  const { companyId, profile, isAdmin } = useAppContext();
+  const [tasks, setTasks] = useState(initialTasks);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  function handleCreate(data: NewTaskData) {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: data.title,
-      description: data.description,
-      deadline: data.deadline,
-      status: "pending",
-      createdAt: formatDate(new Date()),
-    };
-    setTasks((prev) => [newTask, ...prev]);
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
+
+  const handleTaskInserted = useCallback((task: Task) => {
+    setTasks((prev) => {
+      if (prev.some((item) => item.id === task.id)) return prev;
+      return [task, ...prev];
+    });
+  }, []);
+
+  const handleTaskUpdated = useCallback((task: Task) => {
+    setTasks((prev) => prev.map((item) => (item.id === task.id ? task : item)));
+    setSelectedTask((prev) => (prev?.id === task.id ? task : prev));
+  }, []);
+
+  const handleTaskDeleted = useCallback((taskId: string) => {
+    setTasks((prev) => prev.filter((item) => item.id !== taskId));
+    setSelectedTask((prev) => (prev?.id === taskId ? null : prev));
+  }, []);
+
+  useTasksRealtime(companyId, {
+    onTaskInserted: handleTaskInserted,
+    onTaskUpdated: handleTaskUpdated,
+    onTaskDeleted: handleTaskDeleted,
+  });
+
+  async function handleCreate(data: NewTaskData): Promise<boolean> {
+    if (!companyId || !profile) {
+      toast.error("Empresa não encontrada.");
+      return false;
+    }
+
+    const { data: task, error } = await CreateTask({
+      ...data,
+      companyId,
+      createdBy: profile.id,
+    });
+
+    if (error || !task) {
+      toast.error("Não foi possível criar a tarefa.");
+      return false;
+    }
+
+    setTasks((prev) => {
+      if (prev.some((item) => item.id === task.id)) return prev;
+      return [task, ...prev];
+    });
+    toast.success("Tarefa criada com sucesso.");
+    return true;
   }
 
-  function handleStatusChange(taskId: string, status: TaskStatus) {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, status } : task)),
-    );
-    setSelectedTask((prev) => (prev?.id === taskId ? { ...prev, status } : prev));
+  async function handleUpdateInfo(taskId: string, data: UpdateTaskData): Promise<boolean> {
+    if (!profile) {
+      toast.error("Usuário não autenticado.");
+      return false;
+    }
+
+    const { data: task, error } = await UpdateTask(taskId, data, profile.id);
+
+    if (error || !task) {
+      toast.error("Não foi possível atualizar a tarefa.");
+      return false;
+    }
+
+    handleTaskUpdated(task);
+    toast.success("Tarefa atualizada com sucesso.");
+    return true;
   }
 
-  const totalTasks = tasks.length;
-  const completedCount = tasks.filter((t) => t.status === "completed").length;
+  async function handleStatusChange(taskId: string, status: TaskStatus): Promise<boolean> {
+    if (!profile) {
+      toast.error("Usuário não autenticado.");
+      return false;
+    }
+
+    const { data: task, error } = await UpdateTaskStatus(taskId, status, profile.id);
+
+    if (error || !task) {
+      toast.error("Não foi possível atualizar o status.");
+      return false;
+    }
+
+    handleTaskUpdated(task);
+    toast.success("Status atualizado com sucesso.");
+    return true;
+  }
+
+  async function handleDelete(taskId: string): Promise<boolean> {
+    if (!profile) {
+      toast.error("Usuário não autenticado.");
+      return false;
+    }
+
+    const { error } = await DeleteTask(taskId, profile.id, isAdmin);
+
+    if (error) {
+      toast.error("Não foi possível excluir a tarefa.");
+      return false;
+    }
+
+    handleTaskDeleted(taskId);
+    toast.success("Tarefa excluída com sucesso.");
+    return true;
+  }
+
+  const completedThisMonth = getColumnTasks(tasks, "completed");
+  const totalTasks = tasks.filter((task) => task.status !== "completed").length + completedThisMonth.length;
+  const completedCount = completedThisMonth.length;
+  const currentUserId = profile?.id ?? "";
+  const assigneeOptions = useMemo(
+    () =>
+      withCurrentUserAsAssignee(
+        assignees,
+        profile ? profileToTaskAssignee(profile) : null,
+      ),
+    [assignees, profile],
+  );
 
   return (
     <>
@@ -130,7 +183,8 @@ export function TasksBoard() {
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+            disabled={!profile}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
           >
             <Plus className="size-4" />
             Nova tarefa
@@ -141,7 +195,7 @@ export function TasksBoard() {
           <div className="flex items-center justify-center gap-2 sm:gap-3">
             {TASK_STATUS_ORDER.map((status, index) => {
               const Icon = COLUMN_ICONS[status];
-              const count = tasks.filter((t) => t.status === status).length;
+              const count = getColumnTasks(tasks, status).length;
 
               return (
                 <div key={status} className="flex items-center gap-2 sm:gap-3">
@@ -165,7 +219,7 @@ export function TasksBoard() {
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
           {TASK_STATUS_ORDER.map((status) => {
-            const columnTasks = tasks.filter((t) => t.status === status);
+            const columnTasks = getColumnTasks(tasks, status);
             const Icon = COLUMN_ICONS[status];
 
             return (
@@ -191,7 +245,12 @@ export function TasksBoard() {
                     <div className="border-border flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-6 text-center">
                       <Icon className="text-muted-foreground/50 size-8" />
                       <p className="text-muted-foreground text-xs">
-                        Nenhuma tarefa {status === "pending" ? "pendente" : status === "in_progress" ? "em progresso" : "finalizada"}
+                        Nenhuma tarefa{" "}
+                        {status === "pending"
+                          ? "pendente"
+                          : status === "in_progress"
+                            ? "em progresso"
+                            : "finalizada neste mês"}
                       </p>
                     </div>
                   ) : (
@@ -214,12 +273,21 @@ export function TasksBoard() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreate={handleCreate}
+        assignees={assigneeOptions}
+        currentUserId={currentUserId}
+        canSelectAssignee={isAdmin}
       />
 
       <TaskDetailModal
         task={selectedTask}
+        assignees={assigneeOptions}
+        currentUserId={currentUserId}
+        canSelectAssignee={isAdmin}
+        isAdmin={isAdmin}
         onClose={() => setSelectedTask(null)}
+        onUpdateInfo={handleUpdateInfo}
         onStatusChange={handleStatusChange}
+        onDelete={handleDelete}
       />
     </>
   );
