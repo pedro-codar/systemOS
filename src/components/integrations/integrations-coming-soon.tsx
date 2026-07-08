@@ -25,7 +25,7 @@ type IntegrationItem = {
   id: string;
   name: string;
   Icon: ComponentType<SimpleIconProps>;
-  accentClass: string;
+  surfaceClass: string;
 };
 
 const INTEGRATIONS: IntegrationItem[] = [
@@ -33,49 +33,49 @@ const INTEGRATIONS: IntegrationItem[] = [
     id: "google-drive",
     name: "Google Drive",
     Icon: SiGoogledrive,
-    accentClass: "from-info/20 to-info/5 ring-info/25",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "google-calendar",
     name: "Google Calendar",
     Icon: SiGooglecalendar,
-    accentClass: "from-primary/25 to-primary/5 ring-primary/30",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "google-tag-manager",
     name: "Google Tag Manager",
     Icon: SiGoogletagmanager,
-    accentClass: "from-warning/20 to-warning/5 ring-warning/25",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "trello",
     name: "Trello",
     Icon: SiTrello,
-    accentClass: "from-info/20 to-primary/5 ring-info/20",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "clickup",
     name: "ClickUp",
     Icon: SiClickup,
-    accentClass: "from-accent/25 to-accent/5 ring-accent/30",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "whatsapp",
     name: "WhatsApp",
     Icon: SiWhatsapp,
-    accentClass: "from-success/20 to-success/5 ring-success/25",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "youtube",
     name: "YouTube",
     Icon: SiYoutube,
-    accentClass: "from-destructive/20 to-destructive/5 ring-destructive/25",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
   {
     id: "instagram",
     name: "Instagram",
     Icon: SiInstagram,
-    accentClass: "from-accent/20 to-primary/5 ring-accent/25",
+    surfaceClass: "from-foreground/12 to-muted/40 ring-border",
   },
 ];
 
@@ -157,9 +157,9 @@ export function IntegrationsComingSoon() {
                         />
 
                         <div
-                          className={`bg-gradient-to-br ${integration.accentClass} relative flex size-14 items-center justify-center rounded-2xl shadow-inner ring-1 transition-transform duration-300 group-hover:scale-110`}
+                          className={`bg-gradient-to-br ${integration.surfaceClass} text-foreground group-hover:text-muted-foreground relative flex size-14 items-center justify-center rounded-2xl shadow-inner ring-1 transition-all duration-300 group-hover:scale-110`}
                         >
-                          <Icon color="default" size={26} />
+                          <Icon color="currentColor" size={26} />
                         </div>
 
                         <p className="text-foreground relative text-center text-xs font-semibold leading-tight">

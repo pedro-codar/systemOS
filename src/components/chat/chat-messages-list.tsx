@@ -187,9 +187,9 @@ export function ChatMessagesList({
     <div
       ref={scrollContainerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-6 py-6"
+      className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6"
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 md:gap-10">
         {showEmptyState ? (
           <ChatEmptyState userName={userName} userRole={userRole} />
         ) : (

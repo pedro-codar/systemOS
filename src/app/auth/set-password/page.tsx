@@ -73,23 +73,27 @@ export default function SetPasswordPage() {
 
   if (isCheckingSession) {
     return (
-      <div className="bg-foreground text-background flex min-h-full flex-1 items-center justify-center">
+      <div className="flex min-h-full flex-1 items-center justify-center">
         <Loader2 className="text-primary size-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="bg-foreground text-background flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-center px-6 py-8">
-        <span className="bg-primary/15 text-primary border-primary/30 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide uppercase">
-          Systemos
-        </span>
-      </header>
-
-      <main className="flex flex-1 items-center justify-center px-6 pb-12">
+    <div className="flex min-h-full flex-1 flex-col">
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           <div className="bg-primary-foreground border-secondary-foreground/15 rounded-2xl border p-8 shadow-sm">
+            <div className="mb-8 flex justify-center">
+              <img
+                src="https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/oratus_light.png"
+                alt="Oratus"
+                width={1011}
+                height={247}
+                className="h-auto w-full max-w-[180px]"
+              />
+            </div>
+
             <div className="mb-8 text-center">
               <h1 className="text-background text-[40px] font-semibold tracking-tight">
                 Definir senha

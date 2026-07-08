@@ -69,9 +69,21 @@ function ConfirmAuthContent() {
   }, [router, searchParams]);
 
   return (
-    <div className="bg-foreground text-background flex min-h-full flex-1 flex-col items-center justify-center gap-4">
-      <Loader2 className="text-primary size-8 animate-spin" />
-      <p className="text-muted-foreground text-sm">{message}</p>
+    <div className="flex min-h-full flex-1 flex-col">
+      <header className="flex items-center justify-center px-6 py-8">
+        <img
+          src="https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/oratus_light.png"
+          alt="Oratus"
+          width={1011}
+          height={247}
+          className="h-auto w-full max-w-[180px]"
+        />
+      </header>
+
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 pb-12">
+        <Loader2 className="text-primary size-8 animate-spin" />
+        <p className="text-muted-foreground text-sm">{message}</p>
+      </main>
     </div>
   );
 }
@@ -80,8 +92,20 @@ export default function ConfirmAuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="bg-foreground text-background flex min-h-full flex-1 items-center justify-center">
-          <Loader2 className="text-primary size-8 animate-spin" />
+        <div className="flex min-h-full flex-1 flex-col">
+          <header className="flex items-center justify-center px-6 py-8">
+            <img
+              src="https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/oratus_light.png"
+              alt="Oratus"
+              width={1011}
+              height={247}
+              className="h-auto w-full max-w-[180px]"
+            />
+          </header>
+
+          <main className="flex flex-1 items-center justify-center px-6 pb-12">
+            <Loader2 className="text-primary size-8 animate-spin" />
+          </main>
         </div>
       }
     >

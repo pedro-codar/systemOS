@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BriefingSidebar } from "@/components/chat/briefing-sidebar";
 import { ChatInput } from "@/components/chat/chat-input";
@@ -31,13 +31,30 @@ export function ChatShell({
   userName,
   userRole,
 }: ChatShellProps) {
-  const [isBriefingOpen, setIsBriefingOpen] = useState(true);
+  const [isBriefingOpen, setIsBriefingOpen] = useState(false);
   const [messages, setMessages] = useState(initialMessages);
   const [hasMoreOlder, setHasMoreOlder] = useState(initialHasMoreOlder);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [isAgentResponding, setIsAgentResponding] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
   const agentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+
+    function syncBriefingDefault(matches: boolean) {
+      setIsBriefingOpen(matches);
+    }
+
+    syncBriefingDefault(mediaQuery.matches);
+
+    function onChange(event: MediaQueryListEvent) {
+      syncBriefingDefault(event.matches);
+    }
+
+    mediaQuery.addEventListener("change", onChange);
+    return () => mediaQuery.removeEventListener("change", onChange);
+  }, []);
 
   const clearAgentTimeout = useCallback(() => {
     if (agentTimeoutRef.current) {
@@ -104,12 +121,12 @@ export function ChatShell({
   }, [conversationId, hasMoreOlder, isLoadingOlder, messages]);
 
   return (
-    <div className="bg-background flex h-screen overflow-hidden">
+    <div className="bg-background flex h-dvh overflow-hidden">
       <Sidebar activeItem="chat" />
 
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-end gap-2 px-6 py-2">
+          <header className="flex items-center justify-end gap-2 px-4 py-2 pl-14 md:px-6 md:pl-6">
             <button
               type="button"
               aria-label={isBriefingOpen ? "Fechar briefing" : "Abrir briefing"}
@@ -122,13 +139,6 @@ export function ChatShell({
               }`}
             >
               <FileText className="size-5" />
-            </button>
-            <button
-              type="button"
-              aria-label="Notificações"
-              className="text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors"
-            >
-              <Bell className="size-5" />
             </button>
           </header>
 

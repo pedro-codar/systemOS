@@ -2,7 +2,7 @@
 
 import { triggerChat } from "@/actions/chat";
 import { CreateChatMessage } from "@/lib/lib-chat-message";
-import { ArrowUp, Mic } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { useRef, useState } from "react";
 
 type ChatInputProps = {
@@ -33,14 +33,17 @@ export function ChatInput({
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
-
+  const resizeTextarea = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    resizeTextarea();
   };
 
   const handleSend = async () => {
@@ -79,7 +82,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="pb-4">
+    <div className="px-3 pb-3 md:px-0 md:pb-4">
       <div className="bg-sidebar border-border mx-auto max-w-3xl rounded-3xl border">
         <textarea
           ref={textareaRef}
@@ -93,28 +96,18 @@ export function ChatInput({
           }
           rows={1}
           disabled={isDisabled}
-          className="text-foreground placeholder:text-muted-foreground max-h-[400px] w-full resize-none overflow-y-auto bg-transparent px-4 pt-4 text-[18px] outline-none disabled:opacity-60"
+          className="text-foreground placeholder:text-muted-foreground max-h-[200px] w-full resize-none overflow-y-auto bg-transparent px-4 pt-4 text-base outline-none disabled:opacity-60 md:max-h-[400px] md:text-[18px]"
         />
         <div className="flex items-center justify-end px-3 pb-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Entrada de voz"
-              disabled={isDisabled}
-              className="text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors disabled:opacity-50"
-            >
-              <Mic className="text-foreground size-[20px]" />
-            </button>
-            <button
-              type="button"
-              aria-label="Enviar mensagem"
-              onClick={() => void handleSend()}
-              disabled={isDisabled || !message.trim()}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-9 w-9 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <ArrowUp className="size-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            aria-label="Enviar mensagem"
+            onClick={() => void handleSend()}
+            disabled={isDisabled || !message.trim()}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-9 w-9 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <ArrowUp className="size-4" />
+          </button>
         </div>
       </div>
     </div>

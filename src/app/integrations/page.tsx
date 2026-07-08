@@ -1,6 +1,5 @@
 import { IntegrationsComingSoon } from "@/components/integrations/integrations-coming-soon";
 import { Sidebar } from "@/components/shared/sidebar";
-import { Bell } from "lucide-react";
 
 export default function IntegrationsPage() {
   return (
@@ -8,7 +7,7 @@ export default function IntegrationsPage() {
       <Sidebar activeItem="integrations" />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex shrink-0 items-center justify-between gap-4 px-6 py-4">
+        <header className="flex shrink-0 items-center justify-between gap-4 px-6 py-4 max-sm:mt-10">
           <div>
             <div className="mb-1 flex items-center gap-2">
               <h1 className="text-foreground text-lg font-semibold">Integrações</h1>
@@ -17,13 +16,6 @@ export default function IntegrationsPage() {
               Conecte as ferramentas da sua empresa ao assistente de IA.
             </p>
           </div>
-          <button
-            type="button"
-            aria-label="Notificações"
-            className="text-muted-foreground hover:text-foreground relative rounded-lg p-2 transition-colors"
-          >
-            <Bell className="size-5" />
-          </button>
         </header>
 
         <main className="flex min-h-0 flex-1 justify-center overflow-y-auto px-6 pb-8">

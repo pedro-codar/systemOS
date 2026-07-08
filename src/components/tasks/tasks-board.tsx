@@ -81,6 +81,7 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
 
     const { data: task, error } = await CreateTask({
       ...data,
+      assignedTo: isAdmin ? data.assignedTo : profile.id,
       companyId,
       createdBy: profile.id,
     });
@@ -122,7 +123,7 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
       return false;
     }
 
-    const { data: task, error } = await UpdateTaskStatus(taskId, status, profile.id);
+    const { data: task, error } = await UpdateTaskStatus(taskId, status, profile.id, isAdmin);
 
     if (error || !task) {
       toast.error("Não foi possível atualizar o status.");
@@ -167,31 +168,30 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
 
   return (
     <>
-      <div className="flex h-full flex-col gap-6">
-        <div className="flex shrink-0 items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <p className="text-muted-foreground text-sm">
-              {totalTasks} {totalTasks === 1 ? "tarefa" : "tarefas"}
-              {completedCount > 0 && (
-                <span className="text-muted-foreground/70">
-                  {" "}
-                  · {completedCount} finalizada{completedCount !== 1 ? "s" : ""}
-                </span>
-              )}
-            </p>
-          </div>
+      <div className="flex h-full min-h-0 flex-col gap-4 sm:gap-6">
+        <div className="flex shrink-0 items-center justify-between gap-3">
+          <p className="text-muted-foreground min-w-0 truncate text-sm">
+            {totalTasks} {totalTasks === 1 ? "tarefa" : "tarefas"}
+            {completedCount > 0 && (
+              <span className="text-muted-foreground/70">
+                {" "}
+                · {completedCount} finalizada{completedCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </p>
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
             disabled={!profile}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors sm:px-4"
           >
             <Plus className="size-4" />
-            Nova tarefa
+            <span className="hidden sm:inline">Nova tarefa</span>
+            <span className="sm:hidden">Nova</span>
           </button>
         </div>
 
-        <div className="border-border bg-muted/30 shrink-0 rounded-xl border px-4 py-3">
+        <div className="border-border bg-muted/30 hidden shrink-0 rounded-xl border px-4 py-3 sm:block">
           <div className="flex items-center justify-center gap-2 sm:gap-3">
             {TASK_STATUS_ORDER.map((status, index) => {
               const Icon = COLUMN_ICONS[status];
@@ -201,7 +201,7 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
                 <div key={status} className="flex items-center gap-2 sm:gap-3">
                   <div className="flex items-center gap-2">
                     <Icon className="text-muted-foreground size-4 shrink-0" />
-                    <span className="text-foreground hidden text-sm font-medium sm:inline">
+                    <span className="text-foreground text-sm font-medium">
                       {TASK_STATUS_LABELS[status]}
                     </span>
                     <span className="bg-background text-muted-foreground rounded-md px-1.5 py-0.5 text-xs tabular-nums">
@@ -217,7 +217,7 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
           </div>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-1 md:grid md:snap-none md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0">
           {TASK_STATUS_ORDER.map((status) => {
             const columnTasks = getColumnTasks(tasks, status);
             const Icon = COLUMN_ICONS[status];
@@ -225,9 +225,9 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
             return (
               <div
                 key={status}
-                className="border-border bg-muted/20 flex min-h-[320px] flex-col rounded-xl border md:min-h-0"
+                className="border-border bg-muted/20 flex w-[min(85vw,20rem)] shrink-0 snap-center flex-col rounded-xl border md:h-full md:min-h-0 md:w-auto"
               >
-                <div className="border-border flex items-center gap-2.5 border-b px-4 py-3">
+                <div className="border-border flex items-center gap-2.5 border-b px-3 py-3 sm:px-4">
                   <Icon className="text-muted-foreground size-4 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <h2 className="text-foreground text-sm font-medium">
@@ -242,7 +242,7 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
 
                 <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3">
                   {columnTasks.length === 0 ? (
-                    <div className="border-border flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-6 text-center">
+                    <div className="border-border flex min-h-[12rem] flex-1 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-4 text-center sm:p-6">
                       <Icon className="text-muted-foreground/50 size-8" />
                       <p className="text-muted-foreground text-xs">
                         Nenhuma tarefa{" "}

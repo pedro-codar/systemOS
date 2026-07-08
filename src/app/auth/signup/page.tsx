@@ -72,25 +72,29 @@ export default function SignupPage() {
     "bg-foreground/100 border-secondary-foreground/20 text-background placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 disabled:opacity-60 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:ring-2";
 
   return (
-    <div className="bg-foreground text-background flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-center px-6 py-8">
-        <span className="bg-primary/15 text-primary border-primary/30 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide uppercase">
-          Systemos
-        </span>
-      </header>
-
-      <main className="flex flex-1 items-center justify-center px-6 pb-12">
+    <div className="flex min-h-full flex-1 flex-col">
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <h1 className="text-background text-[40px] font-semibold tracking-tight">
-              Criar Conta
-            </h1>
-            <p className="text-background mx-auto mt-3 max-w-sm text-[15px] leading-relaxed">
-              Cadastre-se e comece a gerenciar sua empresa com o systemOS.
-            </p>
-          </div>
-
           <div className="bg-primary-foreground border-secondary-foreground/15 rounded-2xl border p-8 shadow-sm">
+            <div className="mb-8 flex justify-center">
+              <img
+                src="https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/oratus_light.png"
+                alt="Oratus"
+                width={1011}
+                height={247}
+                className="h-auto w-full max-w-[180px]"
+              />
+            </div>
+
+            <div className="mb-8 text-center">
+              <h1 className="text-background text-[25px] font-semibold tracking-tight">
+                Criar Conta
+              </h1>
+              <p className="text-background mx-auto mt-3 max-w-sm text-[15px] leading-relaxed">
+                Cadastre-se e comece a gerenciar sua empresa com ORATUS.
+              </p>
+            </div>
+
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <label

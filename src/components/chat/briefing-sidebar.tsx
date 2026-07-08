@@ -1,77 +1,35 @@
 "use client";
 
 import { Clock, FileText, PanelRightClose } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Task } from "@/components/tasks/types";
+import { GetTasks } from "@/lib/lib-task";
+import { createClient } from "@/lib/supabase/client";
+import { formatDeadline, isDeadlineOverdue } from "@/components/tasks/utils";
 
 type BriefingSidebarProps = {
   onClose: () => void;
 };
 
+type BriefingTaskStatus = "pending" | "overdue" | "in_progress";
+
 type BriefingTask = {
   id: string;
   title: string;
   deadline: string;
-  status: "overdue" | "in_progress";
+  status: BriefingTaskStatus;
 };
-
-type BriefingEvent = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-};
-
-type BriefingNotification = {
-  id: string;
-  message: string;
-};
-
-const overdueTasks: BriefingTask[] = [
-  {
-    id: "1",
-    title: "Revisar fluxo de navegação do menu",
-    deadline: "28/06/2026",
-    status: "overdue",
-  },
-];
-
-const upcomingTasks: BriefingTask[] = [
-  {
-    id: "2",
-    title: "Ajustar contraste do rodapé",
-    deadline: "02/07/2026",
-    status: "in_progress",
-  },
-];
-
-const upcomingEvents: BriefingEvent[] = [
-  {
-    id: "1",
-    title: "Reunião de Alinhamento - Almara",
-    date: "02/07",
-    time: "14:00",
-  },
-];
-
-const pendingNotifications: BriefingNotification[] = [
-  {
-    id: "1",
-    message: "Novo colaborador convidado por Pedro Lucas",
-  },
-  {
-    id: "2",
-    message: "Tarefa 'Configurar Supabase' criada",
-  },
-];
 
 const statusLabels = {
+  pending: "Pendente",
   overdue: "Atrasado",
   in_progress: "Em progresso",
 } as const;
 
 const statusStyles = {
+  pending: "bg-muted text-muted-foreground",
   overdue: "bg-destructive/15 text-destructive",
-  in_progress: "bg-muted text-muted-foreground",
+  in_progress: "bg-primary/15 text-primary",
 } as const;
 
 function BriefingSection({
@@ -104,90 +62,165 @@ function TaskCard({ task }: { task: BriefingTask }) {
       </div>
       <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
         <Clock className="size-3.5 shrink-0" />
-        <span>Prazo: {task.deadline}</span>
+        <span>Prazo: {formatDeadline(task.deadline)}</span>
       </div>
-    </div>
-  );
-}
-
-function EventCard({ event }: { event: BriefingEvent }) {
-  return (
-    <div className="border-border bg-card rounded-lg border p-3">
-      <p className="text-foreground mb-2 text-sm font-medium leading-snug">{event.title}</p>
-      <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        <span>{event.date}</span>
-        <span>•</span>
-        <Clock className="size-3.5 shrink-0" />
-        <span>{event.time}</span>
-      </div>
-    </div>
-  );
-}
-
-function NotificationCard({ notification }: { notification: BriefingNotification }) {
-  return (
-    <div className="border-border bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        <span className="text-muted-foreground mr-2">•</span>
-        {notification.message}
-      </p>
     </div>
   );
 }
 
 export function BriefingSidebar({ onClose }: BriefingSidebarProps) {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTasks() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        if (isMounted) {
+          setTasks([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profile")
+        .select("company_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      let companyId = profile?.company_id;
+
+      if (!companyId) {
+        const { data: company } = await supabase
+          .from("company")
+          .select("id")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+
+        companyId = company?.id;
+      }
+
+      if (!companyId) {
+        if (isMounted) {
+          setTasks([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data } = await GetTasks(supabase, companyId);
+
+      if (isMounted) {
+        setTasks(data ?? []);
+        setLoading(false);
+      }
+    }
+
+    void loadTasks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+
+    if (isMobile) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  const { overdueTasks, upcomingTasks } = useMemo(() => {
+    const withDeadline = tasks.filter((task) => task.deadline);
+
+    const overdue = withDeadline
+      .filter((task) => task.status !== "completed" && isDeadlineOverdue(task.deadline))
+      .sort((a, b) => a.deadline.localeCompare(b.deadline))
+      .slice(0, 5)
+      .map((task) => ({ ...task, status: "overdue" as const }));
+
+    const upcoming = withDeadline
+      .filter((task) => task.status !== "completed" && !isDeadlineOverdue(task.deadline))
+      .sort((a, b) => a.deadline.localeCompare(b.deadline))
+      .slice(0, 5)
+      .map(
+        (task): BriefingTask => ({
+          ...task,
+          status: task.status === "pending" ? "pending" : "in_progress",
+        }),
+      );
+
+    return { overdueTasks: overdue, upcomingTasks: upcoming };
+  }, [tasks]);
+
+  const showEmpty = !loading && overdueTasks.length === 0 && upcomingTasks.length === 0;
+
   return (
-    <aside className="border-border bg-sidebar flex h-full w-80 shrink-0 flex-col border-l">
-      <div className="border-border flex items-center justify-between border-b px-4 py-4">
-        <div className="flex items-center gap-2">
-          <FileText className="text-foreground size-4" />
-          <h2 className="text-foreground text-base font-semibold">Briefing</h2>
+    <>
+      <button
+        type="button"
+        aria-label="Fechar briefing"
+        className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        onClick={onClose}
+      />
+
+      <aside className="border-border bg-sidebar fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-sm flex-col border-l shadow-xl md:static md:w-80 md:max-w-none md:shadow-none">
+        <div className="border-border flex items-center justify-between border-b px-4 py-4">
+          <div className="flex items-center gap-2">
+            <FileText className="text-foreground size-4" />
+            <h2 className="text-foreground text-base font-semibold">Briefing</h2>
+          </div>
+          <button
+            type="button"
+            aria-label="Fechar briefing"
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-2 transition-colors"
+          >
+            <PanelRightClose className="size-4" />
+          </button>
         </div>
-        <button
-          type="button"
-          aria-label="Fechar briefing"
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-2 transition-colors"
-        >
-          <PanelRightClose className="size-4" />
-        </button>
-      </div>
 
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-5">
-        <BriefingSection title="Tarefas atrasadas">
-          {overdueTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </BriefingSection>
+        <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-5">
+          {loading ? (
+            <p className="text-muted-foreground text-sm">Carregando tarefas...</p>
+          ) : showEmpty ? (
+            <p className="text-muted-foreground text-sm">
+              Nenhuma tarefa com prazo para exibir.
+            </p>
+          ) : (
+            <>
+              <BriefingSection title="Tarefas atrasadas">
+                {overdueTasks.length > 0 ? (
+                  overdueTasks.map((task) => <TaskCard key={task.id} task={task} />)
+                ) : (
+                  <p className="text-muted-foreground text-sm">Sem tarefas atrasadas.</p>
+                )}
+              </BriefingSection>
 
-        <BriefingSection title="Próximas entregas">
-          {upcomingTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </BriefingSection>
-
-        <BriefingSection title="Compromissos próximos">
-          {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </BriefingSection>
-
-        <BriefingSection title="Notificações pendentes">
-          {pendingNotifications.map((notification) => (
-            <NotificationCard key={notification.id} notification={notification} />
-          ))}
-        </BriefingSection>
-      </div>
-
-      <div className="border-border flex items-center justify-between border-t px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="bg-primary size-2 rounded-full" />
-          <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-            Sistema conectado
-          </span>
+              <BriefingSection title="Próximas entregas">
+                {upcomingTasks.length > 0 ? (
+                  upcomingTasks.map((task) => <TaskCard key={task.id} task={task} />)
+                ) : (
+                  <p className="text-muted-foreground text-sm">Sem próximas entregas.</p>
+                )}
+              </BriefingSection>
+            </>
+          )}
         </div>
-        <span className="text-muted-foreground text-xs">v1.2.0</span>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

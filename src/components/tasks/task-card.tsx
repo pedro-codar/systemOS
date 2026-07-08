@@ -17,13 +17,13 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="border-border bg-sidebar-border hover:border-foreground/20 group w-full rounded-xl border p-4 text-left transition-all hover:shadow-md"
+      className="border-border bg-sidebar-border hover:border-foreground/20 group w-full rounded-xl border p-3 text-left transition-all hover:shadow-md sm:p-4"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <h3 className="text-foreground line-clamp-2 text-sm font-medium leading-snug">
           {task.title}
         </h3>
-        <ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 opacity-0 transition-all group-hover:opacity-100" />
+        <ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 opacity-40 transition-all group-hover:opacity-100 sm:opacity-0" />
       </div>
 
       {task.description && (
