@@ -100,7 +100,7 @@ export function TaskDetailModal({
 
   const currentTask = task;
   const canEditInfo = canEditTaskInfo(currentTask, currentUserId);
-  const canEditStatus = canEditTaskStatus(currentTask, currentUserId);
+  const canEditStatus = canEditTaskStatus(currentTask, currentUserId, isAdmin);
   const canDelete = canDeleteTask(currentTask, currentUserId, isAdmin);
   const overdue =
     currentTask.status !== "completed" && isDeadlineOverdue(currentTask.deadline);

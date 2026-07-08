@@ -39,7 +39,8 @@ export function canEditTaskInfo(task: Task, userId: string) {
   return task.createdBy === userId;
 }
 
-export function canEditTaskStatus(task: Task, userId: string) {
+export function canEditTaskStatus(task: Task, userId: string, isAdmin = false) {
+  if (isAdmin) return true;
   return task.assignedTo === userId;
 }
 

@@ -123,7 +123,7 @@ export function TasksBoard({ initialTasks, assignees }: TasksBoardProps) {
       return false;
     }
 
-    const { data: task, error } = await UpdateTaskStatus(taskId, status, profile.id);
+    const { data: task, error } = await UpdateTaskStatus(taskId, status, profile.id, isAdmin);
 
     if (error || !task) {
       toast.error("Não foi possível atualizar o status.");

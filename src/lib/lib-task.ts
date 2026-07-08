@@ -188,8 +188,21 @@ export async function UpdateTaskStatus(
   taskId: string,
   status: TaskStatus,
   userId: string,
+  isAdmin = false,
 ) {
   const supabase = createClient();
+
+  if (!isAdmin) {
+    const { data: existing, error: fetchError } = await supabase
+      .from("task")
+      .select("assigned_to")
+      .eq("id", taskId)
+      .maybeSingle();
+
+    if (fetchError || !existing || existing.assigned_to !== userId) {
+      return { data: null, error: fetchError ?? new Error("Not allowed") };
+    }
+  }
 
   const { data: task, error } = await supabase
     .from("task")
@@ -198,7 +211,6 @@ export async function UpdateTaskStatus(
       completed_at: status === "completed" ? new Date().toISOString() : null,
     })
     .eq("id", taskId)
-    .eq("assigned_to", userId)
     .select(TASK_SELECT)
     .single();
 
