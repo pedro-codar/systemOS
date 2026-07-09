@@ -21,7 +21,7 @@ export function ChatEmptyState({ userName, userRole }: ChatEmptyStateProps) {
 
   return (
     <p className="text-foreground text-[16px] leading-relaxed whitespace-pre-wrap">
-      {`Olá, ${firstName}! Sou o assistente do SystemOS. ${welcomeMessages[userRole]}\n\nComo posso ajudar hoje?`}
+      {`Olá, ${firstName}! Sou o assistente da Oratos. ${welcomeMessages[userRole]}\n\nComo posso ajudar hoje?`}
     </p>
   );
 }
