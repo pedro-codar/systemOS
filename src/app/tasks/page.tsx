@@ -3,6 +3,11 @@ import { TasksBoard } from "@/components/tasks/tasks-board";
 import type { Task, TaskAssignee } from "@/components/tasks/types";
 import { GetTaskAssignees, GetTasks } from "@/lib/lib-task";
 import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tarefas",
+};
 
 export default async function TasksPage() {
   const supabase = await createClient();

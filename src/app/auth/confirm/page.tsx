@@ -12,6 +12,10 @@ function ConfirmAuthContent() {
   const [message, setMessage] = useState("Confirmando seu convite...");
 
   useEffect(() => {
+    document.title = "Confirmar acesso | Oratos";
+  }, []);
+
+  useEffect(() => {
     async function confirmAuth() {
       const supabase = createClient();
       const next = searchParams.get("next") ?? "/auth/set-password";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Login } from "@/lib/lib-auth";
 import { toast } from "sonner";
@@ -13,6 +13,10 @@ export default function LoginPage() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        document.title = "Login | Oratos";
+    }, []);
 
     async function handleLogin(event: React.FormEvent){
         event.preventDefault()

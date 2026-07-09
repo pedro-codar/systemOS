@@ -1,5 +1,10 @@
 import Link from "next/link"
 import { Bot, BookOpenText, Check, CheckSquare, Users } from "lucide-react"
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Início",
+};
 
 export default function Home() {
   return (

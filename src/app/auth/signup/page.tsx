@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Signup } from "@/lib/lib-auth";
 import { toast } from "sonner";
@@ -30,6 +30,10 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = "Criar conta | Oratos";
+  }, []);
 
   function handleWhatsappChange(value: string) {
     setWhatsapp(formatWhatsapp(value));

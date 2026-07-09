@@ -2,6 +2,11 @@ import { ChatShell } from "@/components/chat/chat-shell";
 import { GetChatMessagesRecent } from "@/lib/lib-chat-message";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Chat",
+};
 
 export default async function ChatPage() {
   const supabase = await createClient();

@@ -17,6 +17,10 @@ export default function SetPasswordPage() {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
+    document.title = "Definir senha | Oratos";
+  }, []);
+
+  useEffect(() => {
     async function checkSession() {
       const supabase = createClient();
       const {

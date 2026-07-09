@@ -5,6 +5,11 @@ import { GetKnowledgeCategories } from "@/lib/lib-knowledge-category";
 import { GetKnowledgeEntries } from "@/lib/lib-knowledge-entries";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Base de conhecimento",
+};
 
 export default async function KnowledgePage() {
   const supabase = await createClient();

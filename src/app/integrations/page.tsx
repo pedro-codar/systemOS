@@ -1,5 +1,10 @@
 import { IntegrationsComingSoon } from "@/components/integrations/integrations-coming-soon";
 import { Sidebar } from "@/components/shared/sidebar";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Integrações",
+};
 
 export default function IntegrationsPage() {
   return (
