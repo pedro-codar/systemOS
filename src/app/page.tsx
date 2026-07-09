@@ -56,7 +56,7 @@ export default function Home() {
 
               <div className="flex flex-wrap items-center gap-4">
                 <Link
-                  href="/auth/sign-up"
+                  href="/auth/signup"
                   className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-accent"
                 >
                   Come&ccedil;ar agora
@@ -270,7 +270,7 @@ export default function Home() {
 
           <div className="mt-8 flex flex-col items-center gap-3">
             <Link
-              href="/auth/sign-up"
+              href="/auth/signup"
               className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-accent"
             >
               Testar gr&aacute;tis por 7 dias
