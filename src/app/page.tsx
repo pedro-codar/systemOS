@@ -1,10 +1,74 @@
 import Link from "next/link"
-import { Bot, BookOpenText, Check, CheckSquare, Users } from "lucide-react"
+import { Bot, BookOpenText, Check, CheckSquare, Users, type LucideIcon } from "lucide-react"
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Início",
 };
+
+const FEATURES: {
+  icon: LucideIcon
+  title: string
+  description: string
+  videoSrc: string
+}[] = [
+  {
+    icon: BookOpenText,
+    title: "Base de conhecimento",
+    description:
+      "O cérebro da operação: centralize regras, contexto e conhecimento estratégico para o assistente responder com consistência.",
+    videoSrc:
+      "https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/animation_knowledge.mp4",
+  },
+  {
+    icon: CheckSquare,
+    title: "Tarefas",
+    description:
+      "Visualize prioridades por status, distribua responsabilidades e acompanhe entregas da equipe em tempo real.",
+    videoSrc:
+      "https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/animation_task.mp4",
+  },
+  {
+    icon: Users,
+    title: "Colaboradores",
+    description:
+      "Convide sua equipe, defina papéis e mantenha todo mundo alinhado ao contexto da empresa — com segurança.",
+    videoSrc:
+      "https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/animation_collaborator.mp4",
+  },
+  {
+    icon: Bot,
+    title: "Chat inteligente",
+    description:
+      "Converse com o assistente com contexto real da operação e receba respostas acionáveis para tomada de decisão.",
+    videoSrc:
+      "https://mclturmjholrfjqfivwi.supabase.co/storage/v1/object/public/system_images/animation_chat.mp4",
+  },
+]
+
+function FeatureDemoVideo({ src }: { src: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-background shadow-inner">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-background/30 via-transparent to-primary/5"
+      />
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        disablePictureInPicture
+        preload="auto"
+        tabIndex={-1}
+        aria-hidden="true"
+        className="pointer-events-none aspect-square w-full select-none object-cover"
+      >
+        <source src={src} type="video/mp4" />
+      </video>
+    </div>
+  )
+}
 
 export default function Home() {
   return (
@@ -76,7 +140,7 @@ export default function Home() {
                 <div className="overflow-hidden rounded-[1.35rem] border border-border bg-background">
                   <iframe
                     className="aspect-video w-full"
-                    src="https://www.youtube.com/embed/dzhQV4utUXE"
+                    src="https://www.youtube.com/embed/z1eSsCv-mzU"
                     title="Apresentacao do Oratus"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerPolicy="strict-origin-when-cross-origin"
@@ -101,136 +165,35 @@ export default function Home() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <article className="rounded-3xl border border-primary/20 bg-primary-foreground p-6 shadow-lg shadow-primary/10">
-            <div className="mb-6 flex items-center gap-2 text-primary">
-              <BookOpenText className="h-5 w-5" />
-              <span className="text-sm font-semibold">Base de conhecimento</span>
-            </div>
+          {FEATURES.map((feature) => {
+            const Icon = feature.icon
 
-            <div className="relative mb-5 h-52 overflow-hidden rounded-2xl border border-primary/15 bg-background/[0.03]">
-              <div className="knowledge-ring-pulse absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/25" />
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
-                Sua empresa
-              </div>
+            return (
+              <article
+                key={feature.title}
+                className="group overflow-hidden rounded-3xl border border-primary/20 bg-primary-foreground shadow-lg shadow-primary/10 transition hover:border-primary/30 hover:shadow-xl hover:shadow-primary/15"
+              >
+                <div className="p-5 sm:p-6">
+                  <div className="mb-5 flex items-center gap-2.5 text-primary">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="text-sm font-semibold">{feature.title}</span>
+                  </div>
 
-              <div className="knowledge-pulse-dot absolute left-8 top-7 rounded-lg border border-info/25 bg-info/10 px-3 py-1 text-[18px] font-medium text-info">
-                Processos
-              </div>
-              <div className="knowledge-pulse-dot absolute right-8 top-10 rounded-lg border border-success/25 bg-success/10 px-3 py-1 text-[18px] font-medium text-success">
-                Cultura
-              </div>
-              <div className="knowledge-pulse-dot absolute bottom-8 left-10 rounded-lg border border-warning/25 bg-warning/10 px-3 py-1 text-[18px] font-medium text-warning">
-                Metas
-              </div>
-              <div className="knowledge-pulse-dot absolute bottom-10 right-10 rounded-lg border border-primary/25 bg-primary/10 px-3 py-1 text-[18px] font-medium text-primary">
-                Politicas
-              </div>
-            </div>
+                  <div className="relative mb-5">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -inset-2 rounded-[1.35rem] bg-primary/10 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100"
+                    />
+                    <FeatureDemoVideo src={feature.videoSrc} />
+                  </div>
 
-            <p className="text-sm leading-6 text-background/70">
-              O cerebro da operacao: centralize regras, contexto e conhecimento
-              estrategico para o assistente responder com consistencia.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-primary/20 bg-primary-foreground p-6 shadow-lg shadow-primary/10">
-            <div className="mb-6 flex items-center gap-2 text-primary">
-              <CheckSquare className="h-5 w-5" />
-              <span className="text-sm font-semibold">Tarefas</span>
-            </div>
-
-            <div className="mb-5 grid h-52 grid-cols-3 gap-3 rounded-2xl border border-primary/15 bg-background/[0.03] p-3">
-              <div className="rounded-xl border border-info/20 bg-info/10 p-2">
-                <p className="mb-2 text-[11px] font-semibold text-info">A fazer</p>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-info/40 animate-pulse" />
-                  <div className="h-2 w-4/5 rounded-full bg-info/25 animate-pulse" />
-                  <div className="h-2 w-3/5 rounded-full bg-info/30 animate-pulse" />
+                  <p className="text-sm leading-6 text-background/70">{feature.description}</p>
                 </div>
-              </div>
-              <div className="rounded-xl border border-warning/20 bg-warning/10 p-2">
-                <p className="mb-2 text-[11px] font-semibold text-warning">Em progresso</p>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-warning/40 animate-pulse" />
-                  <div className="h-2 w-3/4 rounded-full bg-warning/30 animate-pulse" />
-                  <div className="h-2 w-2/3 rounded-full bg-warning/20 animate-pulse" />
-                </div>
-              </div>
-              <div className="rounded-xl border border-success/20 bg-success/10 p-2">
-                <p className="mb-2 text-[11px] font-semibold text-success">Concluido</p>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-success/40 animate-pulse" />
-                  <div className="h-2 w-2/3 rounded-full bg-success/30 animate-pulse" />
-                  <div className="h-2 w-1/2 rounded-full bg-success/20 animate-pulse" />
-                </div>
-              </div>
-            </div>
-
-            <p className="text-sm leading-6 text-background/70">
-              Visualize prioridades por status, distribua responsabilidades e
-              acompanhe entregas da equipe em tempo real.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-primary/20 bg-primary-foreground p-6 shadow-lg shadow-primary/10">
-            <div className="mb-6 flex items-center gap-2 text-primary">
-              <Users className="h-5 w-5" />
-              <span className="text-sm font-semibold">Colaboradores</span>
-            </div>
-
-            <div className="relative mb-5 h-52 overflow-hidden rounded-2xl border border-primary/15 bg-background/[0.03]">
-              <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary/30 bg-primary/15 text-xs font-semibold text-primary">
-                Time
-              </div>
-
-              <div className="integrations-float absolute left-10 top-8 flex h-12 w-12 items-center justify-center rounded-full border border-info/25 bg-info/10 text-xs font-medium text-info">
-                CEO
-              </div>
-              <div className="integrations-float absolute right-10 top-10 flex h-12 w-12 items-center justify-center rounded-full border border-success/25 bg-success/10 text-xs font-medium text-success">
-                Ops
-              </div>
-              <div className="integrations-float absolute bottom-8 left-14 flex h-12 w-12 items-center justify-center rounded-full border border-warning/25 bg-warning/10 text-xs font-medium text-warning">
-                Mkt
-              </div>
-              <div className="integrations-float absolute bottom-10 right-14 flex h-12 w-12 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-xs font-medium text-primary">
-                Fin
-              </div>
-            </div>
-
-            <p className="text-sm leading-6 text-background/70">
-              Convide sua equipe, defina papéis e mantenha todo mundo alinhado ao contexto da empresa — com segurança.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-primary/20 bg-primary-foreground p-6 shadow-lg shadow-primary/10">
-            <div className="mb-6 flex items-center gap-2 text-primary">
-              <Bot className="h-5 w-5" />
-              <span className="text-sm font-semibold">Chat inteligente</span>
-            </div>
-
-            <div className="mb-5 flex h-52 flex-col gap-3 rounded-2xl border border-primary/15 bg-background/[0.03] p-4">
-              
-              <div className="ml-auto w-5/6 rounded-2xl rounded-br-sm border border-primary/25 bg-primary px-3 py-2 text-xs text-primary-foreground">
-                Como funciona nosso processo de reembolso?
-              </div>
-              <div className="w-4/5 rounded-2xl rounded-bl-sm border border-border bg-primary/10 px-3 py-2 text-xs text-background/75">
-                Reembolsos até R$200 você aprova direto. Acima disso, precisa passar pela Marina antes de liberar.
-              </div>
-
-              <div className="w-fit rounded-full border border-border bg-primary-foreground px-3 py-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="chat-typing-dot h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span className="chat-typing-dot h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span className="chat-typing-dot h-1.5 w-1.5 rounded-full bg-primary" />
-                </div>
-              </div>
-            </div>
-
-            <p className="text-sm leading-6 text-background/70">
-              Converse com o assistente com contexto real da operacao e receba
-              respostas acionaveis para tomada de decisao.
-            </p>
-          </article>
+              </article>
+            )
+          })}
         </div>
       </section>
 
