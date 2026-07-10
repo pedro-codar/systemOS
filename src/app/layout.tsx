@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/shared/sonner";
+import { WhatsappFloatButton } from "@/components/shared/whatsapp-float-button";
 import { AppProvider } from "@/context/app-context"
 import "./globals.css";
 
@@ -61,6 +62,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col">
           <AppProvider>
             {children}
+            <WhatsappFloatButton />
             <Toaster />
           </AppProvider>
       </body>
