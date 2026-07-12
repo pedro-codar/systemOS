@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Bot, BookOpenText, Check, CheckSquare, Users, type LucideIcon } from "lucide-react"
+import { Bot, BookOpenText, Brain, Check, CheckSquare, Shield, Users, type LucideIcon } from "lucide-react"
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -240,6 +240,40 @@ export default function Home() {
             </Link>
             <p className="text-sm text-background/60">Sem cart&atilde;o de cr&eacute;dito</p>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-7xl px-6 pb-20 sm:px-8 sm:pb-24 lg:px-10 lg:pb-28">
+        <div className="mb-10 space-y-3 sm:mb-12">
+          <h2 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+            Segurança em primeiro lugar.
+          </h2>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <article className="rounded-3xl border border-primary/20 bg-primary-foreground p-6 shadow-lg shadow-primary/10 sm:p-8">
+            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <Shield className="h-5 w-5" />
+            </div>
+            <h3 className="text-xl font-semibold tracking-tight text-background">
+              Infraestrutura criptografada
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-background/70 sm:text-base">
+              Cada empresa vive em um ambiente completamente separado. Seus dados nunca cruzam com os de ninguém.
+            </p>
+          </article>
+
+          <article className="rounded-3xl border border-primary/20 bg-primary-foreground p-6 shadow-lg shadow-primary/10 sm:p-8">
+            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <Brain className="h-5 w-5" />
+            </div>
+            <h3 className="text-xl font-semibold tracking-tight text-background">
+              Seus dados não treinam IA nenhuma
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-background/70 sm:text-base">
+              Nunca usamos as informações da sua empresa para treinar nossos modelos de IA.
+            </p>
+          </article>
         </div>
       </section>
     </main>
