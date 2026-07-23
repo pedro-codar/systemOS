@@ -1,5 +1,4 @@
 import { IntegrationsComingSoon } from "@/components/integrations/integrations-coming-soon";
-import { Sidebar } from "@/components/shared/sidebar";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
 export default function IntegrationsPage() {
   return (
     <div className="bg-background flex h-screen overflow-hidden">
-      <Sidebar activeItem="integrations" />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 items-center justify-between gap-4 px-6 py-4 max-sm:mt-10">
