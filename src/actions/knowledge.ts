@@ -1,8 +1,12 @@
 'use server'
 
+import type { KnowledgeContextFormat } from '@/components/knowledge/types'
 import { createClient } from '@/lib/supabase/server'
 
-export async function triggerEmbedding(entry_id: number) {
+export async function triggerEmbedding(
+  entry_id: number,
+  context_format: KnowledgeContextFormat,
+) {
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,7 +28,7 @@ export async function triggerEmbedding(entry_id: number) {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ entry_id })
+    body: JSON.stringify({ entry_id, context_format })
   })
 
   return { success: true }

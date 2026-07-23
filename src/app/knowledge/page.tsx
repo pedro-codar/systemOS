@@ -24,6 +24,7 @@ export default async function KnowledgePage() {
   let initialCategories: KnowledgeCategory[] = [];
   let initialEntryContent: Record<string, string> = {};
   let initialEntryIds: Record<string, string> = {};
+  let initialEntryPdfUrls: Record<string, string> = {};
 
   const { data: profile, error: profileError } = await supabase
     .from("profile")
@@ -49,6 +50,9 @@ export default async function KnowledgePage() {
   for (const entry of entries ?? []) {
     initialEntryContent[entry.knowledge_category_id] = entry.content_plain;
     initialEntryIds[entry.knowledge_category_id] = entry.id;
+    if (entry.pdf_url) {
+      initialEntryPdfUrls[entry.knowledge_category_id] = entry.pdf_url;
+    }
   }
 
   return (
@@ -74,6 +78,7 @@ export default async function KnowledgePage() {
             initialCategories={initialCategories}
             initialEntryContent={initialEntryContent}
             initialEntryIds={initialEntryIds}
+            initialEntryPdfUrls={initialEntryPdfUrls}
           />
         </main>
       </div>

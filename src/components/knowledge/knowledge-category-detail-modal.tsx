@@ -1,27 +1,34 @@
 "use client";
 
-import { FileText, Save, Trash2, X } from "lucide-react";
+import { FileText, FileUp, Save, Trash2, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
+import { KnowledgePdfUpload } from "./knowledge-pdf-upload";
 import { KnowledgeRichTextEditor } from "./knowledge-rich-text-editor";
 import type { KnowledgeCategory } from "./types";
+import { getFileNameFromStoragePath } from "./types";
 
 type KnowledgeCategoryDetailModalProps = {
   category: KnowledgeCategory | null;
   content: string;
+  pdfUrl?: string | null;
   onClose: () => void;
   onSaveContent: (categoryId: string, content: string) => Promise<boolean>;
+  onSavePdf: (categoryId: string, file: File) => Promise<boolean>;
   onDeleteCategory: (categoryId: string) => void;
 };
 
 export function KnowledgeCategoryDetailModal({
   category,
   content,
+  pdfUrl = null,
   onClose,
   onSaveContent,
+  onSavePdf,
   onDeleteCategory,
 }: KnowledgeCategoryDetailModalProps) {
   const titleId = useId();
   const [draftContent, setDraftContent] = useState("");
+  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,23 +37,43 @@ export function KnowledgeCategoryDetailModal({
     if (!category) return;
 
     setDraftContent(content);
+    setSelectedPdf(null);
     setIsConfirmingDelete(false);
     setIsSaved(true);
-  }, [category, content]);
+  }, [category, content, pdfUrl]);
 
   if (!category) return null;
 
   const categoryId = category.id;
-  const hasUnsavedChanges = draftContent !== content;
+  const isPdfCategory = category.context_format === "pdf";
+  const existingPdfName = getFileNameFromStoragePath(pdfUrl);
+  const hasUnsavedChanges = isPdfCategory
+    ? Boolean(selectedPdf)
+    : draftContent !== content;
 
-  function handleContentChange(content: string) {
-    setDraftContent(content);
+  function handleContentChange(nextContent: string) {
+    setDraftContent(nextContent);
     setIsSaved(false);
+  }
+
+  function handlePdfChange(file: File | null) {
+    setSelectedPdf(file);
+    setIsSaved(!file);
   }
 
   async function handleSave() {
     setIsSaving(true);
     try {
+      if (isPdfCategory) {
+        if (!selectedPdf) return;
+        const saved = await onSavePdf(categoryId, selectedPdf);
+        if (saved) {
+          setSelectedPdf(null);
+          setIsSaved(true);
+        }
+        return;
+      }
+
       const saved = await onSaveContent(categoryId, draftContent);
       if (saved) setIsSaved(true);
     } finally {
@@ -54,16 +81,7 @@ export function KnowledgeCategoryDetailModal({
     }
   }
 
-  async function handleClose() {
-    if (hasUnsavedChanges) {
-      setIsSaving(true);
-      try {
-        const saved = await onSaveContent(categoryId, draftContent);
-        if (!saved) return;
-      } finally {
-        setIsSaving(false);
-      }
-    }
+  function handleClose() {
     onClose();
   }
 
@@ -87,13 +105,20 @@ export function KnowledgeCategoryDetailModal({
             <div className="min-w-0 flex-1">
               <div className="mb-2 flex items-center gap-2">
                 <span className="bg-primary/15 text-primary ring-primary/25 flex h-8 w-8 items-center justify-center rounded-lg ring-1">
-                  <FileText className="size-4" />
+                  {isPdfCategory ? (
+                    <FileUp className="size-4" />
+                  ) : (
+                    <FileText className="size-4" />
+                  )}
                 </span>
                 {!isSaved && (
                   <span className="bg-warning/15 text-warning rounded-full px-2.5 py-0.5 text-[11px] font-medium">
                     Alterações não salvas
                   </span>
                 )}
+                <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-[11px] font-medium">
+                  {isPdfCategory ? "Documento PDF" : "Texto"}
+                </span>
               </div>
               <h2
                 id={titleId}
@@ -120,14 +145,23 @@ export function KnowledgeCategoryDetailModal({
 
         <div className="flex min-h-0 flex-1 flex-col px-6 py-5 sm:px-8">
           <label className="text-foreground mb-2 block text-sm font-medium">
-            Informações da categoria
+            {isPdfCategory ? "Documento da categoria" : "Informações da categoria"}
           </label>
           <div className="min-h-0 flex-1">
-            <KnowledgeRichTextEditor
-              key={categoryId}
-              content={draftContent}
-              onChange={handleContentChange}
-            />
+            {isPdfCategory ? (
+              <KnowledgePdfUpload
+                key={categoryId}
+                fileName={existingPdfName}
+                isUploading={isSaving}
+                onFileChange={handlePdfChange}
+              />
+            ) : (
+              <KnowledgeRichTextEditor
+                key={categoryId}
+                content={draftContent}
+                onChange={handleContentChange}
+              />
+            )}
           </div>
         </div>
 

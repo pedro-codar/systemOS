@@ -2,7 +2,6 @@
 
 import { FileText } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BriefingSidebar } from "@/components/chat/briefing-sidebar";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessagesList } from "@/components/chat/chat-messages-list";
 import {
@@ -123,24 +122,8 @@ export function ChatShell({
   return (
     <div className="bg-background flex h-dvh overflow-hidden">
       <Sidebar activeItem="chat" />
-
-      <div className="flex min-w-0 flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 overflow-hidden mt-5">
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-end gap-2 px-4 py-2 pl-14 md:px-6 md:pl-6">
-            <button
-              type="button"
-              aria-label={isBriefingOpen ? "Fechar briefing" : "Abrir briefing"}
-              aria-pressed={isBriefingOpen}
-              onClick={() => setIsBriefingOpen((prev) => !prev)}
-              className={`rounded-lg p-2 transition-colors ${
-                isBriefingOpen
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <FileText className="size-5" />
-            </button>
-          </header>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ChatMessagesList
@@ -167,8 +150,6 @@ export function ChatShell({
             />
           </div>
         </div>
-
-        {isBriefingOpen && <BriefingSidebar onClose={() => setIsBriefingOpen(false)} />}
       </div>
     </div>
   );

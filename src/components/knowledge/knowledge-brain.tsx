@@ -7,6 +7,10 @@ import {
   DeleteKnowledgeCategory,
 } from "@/lib/lib-knowledge-category";
 import {
+  DeleteCompanyDocument,
+  UploadCompanyDocument,
+} from "@/lib/lib-company-documents";
+import {
   CreateKnowledgeEntrie,
   UpdateKnowledgeEntrie,
 } from "@/lib/lib-knowledge-entries";
@@ -32,6 +36,7 @@ type KnowledgeBrainProps = {
   initialCategories: KnowledgeCategory[];
   initialEntryContent: Record<string, string>;
   initialEntryIds: Record<string, string>;
+  initialEntryPdfUrls: Record<string, string>;
 };
 
 function normalizeAngle(angle: number) {  const normalized = angle % 360;
@@ -163,12 +168,14 @@ export function KnowledgeBrain({
   initialCategories,
   initialEntryContent,
   initialEntryIds,
+  initialEntryPdfUrls,
 }: KnowledgeBrainProps) {
   const router = useRouter();
   const { companyId, company } = useAppContext();
   const [categories, setCategories] = useState(initialCategories);
   const [categoryContent, setCategoryContent] = useState(initialEntryContent);
   const [entryIds, setEntryIds] = useState(initialEntryIds);
+  const [entryPdfUrls, setEntryPdfUrls] = useState(initialEntryPdfUrls);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
@@ -179,7 +186,8 @@ export function KnowledgeBrain({
   useEffect(() => {
     setCategoryContent(initialEntryContent);
     setEntryIds(initialEntryIds);
-  }, [initialEntryContent, initialEntryIds]);
+    setEntryPdfUrls(initialEntryPdfUrls);
+  }, [initialEntryContent, initialEntryIds, initialEntryPdfUrls]);
 
   const layout = useMemo(() => computeLayout(categories.length), [categories.length]);
   const center = layout.canvasSize / 2;
@@ -192,6 +200,10 @@ export function KnowledgeBrain({
   const selectedCategoryContent = selectedCategory
     ? categoryContent[selectedCategory.id] ?? ""
     : "";
+
+  const selectedCategoryPdfUrl = selectedCategory
+    ? entryPdfUrls[selectedCategory.id] ?? null
+    : null;
 
   const cardPositions = useMemo(
     () =>
@@ -237,6 +249,7 @@ export function KnowledgeBrain({
         data.name,
         data.description,
         companyId,
+        data.context_format,
       );
 
       if (error || !category) {
@@ -268,7 +281,7 @@ export function KnowledgeBrain({
           return false;
         }
 
-        const embeddingResult = await triggerEmbedding(Number(existingEntryId));
+        const embeddingResult = await triggerEmbedding(Number(existingEntryId), "text");
         if (embeddingResult?.error) {
           toast.warning("Conteúdo salvo, mas a indexação falhou.");
         } else {
@@ -292,7 +305,7 @@ export function KnowledgeBrain({
 
         setEntryIds((prev) => ({ ...prev, [categoryId]: String(data.id) }));
 
-        const embeddingResult = await triggerEmbedding(data.id);
+        const embeddingResult = await triggerEmbedding(data.id, "text");
         if (embeddingResult?.error) {
           toast.warning("Conteúdo salvo, mas a indexação falhou.");
         } else {
@@ -307,13 +320,96 @@ export function KnowledgeBrain({
     [companyId, entryIds, router],
   );
 
+  const handleSavePdf = useCallback(
+    async (categoryId: string, file: File): Promise<boolean> => {
+      if (!companyId) {
+        toast.error("Empresa não encontrada.");
+        return false;
+      }
+
+      const { path, error: uploadError } = await UploadCompanyDocument(
+        companyId,
+        categoryId,
+        file,
+      );
+
+      if (uploadError || !path) {
+        toast.error("Não foi possível enviar o PDF.");
+        return false;
+      }
+
+      const existingEntryId = entryIds[categoryId];
+      const previousPdfPath = entryPdfUrls[categoryId];
+      const updatedAt = new Date();
+
+      if (existingEntryId) {
+        const { error } = await UpdateKnowledgeEntrie(
+          existingEntryId,
+          "",
+          updatedAt,
+          path,
+        );
+
+        if (error) {
+          await DeleteCompanyDocument(path);
+          toast.error("Não foi possível salvar o documento.");
+          return false;
+        }
+
+        if (previousPdfPath && previousPdfPath !== path) {
+          await DeleteCompanyDocument(previousPdfPath);
+        }
+
+        const embeddingResult = await triggerEmbedding(Number(existingEntryId), "pdf");
+        if (embeddingResult?.error) {
+          toast.warning("Documento salvo, mas a indexação falhou.");
+        } else {
+          toast.success("Documento salvo com sucesso.");
+        }
+      } else {
+        const { data, error } = await CreateKnowledgeEntrie(
+          companyId,
+          categoryId,
+          "",
+          updatedAt,
+          path,
+        );
+
+        if (error || !data) {
+          await DeleteCompanyDocument(path);
+          toast.error("Não foi possível salvar o documento.");
+          return false;
+        }
+
+        setEntryIds((prev) => ({ ...prev, [categoryId]: String(data.id) }));
+
+        const embeddingResult = await triggerEmbedding(data.id, "pdf");
+        if (embeddingResult?.error) {
+          toast.warning("Documento salvo, mas a indexação falhou.");
+        } else {
+          toast.success("Documento salvo com sucesso.");
+        }
+      }
+
+      setEntryPdfUrls((prev) => ({ ...prev, [categoryId]: path }));
+      router.refresh();
+      return true;
+    },
+    [companyId, entryIds, entryPdfUrls, router],
+  );
+
   const handleDeleteCategory = useCallback(
     async (categoryId: string) => {
+      const pdfPath = entryPdfUrls[categoryId];
       const { error } = await DeleteKnowledgeCategory(categoryId);
 
       if (error) {
         toast.error("Não foi possível excluir a categoria.");
         return;
+      }
+
+      if (pdfPath) {
+        await DeleteCompanyDocument(pdfPath);
       }
 
       setCategoryContent((prev) => {
@@ -326,11 +422,16 @@ export function KnowledgeBrain({
         delete next[categoryId];
         return next;
       });
+      setEntryPdfUrls((prev) => {
+        const next = { ...prev };
+        delete next[categoryId];
+        return next;
+      });
       setSelectedCategoryId(null);
       toast.success("Categoria excluída com sucesso.");
       router.refresh();
     },
-    [router],
+    [entryPdfUrls, router],
   );
   return (
     <>
@@ -343,8 +444,10 @@ export function KnowledgeBrain({
       <KnowledgeCategoryDetailModal
         category={selectedCategory}
         content={selectedCategoryContent}
+        pdfUrl={selectedCategoryPdfUrl}
         onClose={handleCloseCategoryDetail}
         onSaveContent={handleSaveContent}
+        onSavePdf={handleSavePdf}
         onDeleteCategory={handleDeleteCategory}
       />
     <div className="border-primary/15 shadow-primary/5 relative h-full min-h-0 w-full flex-1 overflow-auto rounded-2xl border shadow-inner">
@@ -443,6 +546,7 @@ export function KnowledgeBrain({
                 <KnowledgeCard
                   category={category}
                   content={categoryContent[category.id]}
+                  pdfUrl={entryPdfUrls[category.id]}
                   onClick={() => handleOpenCategoryDetail(category.id)}
                 />
               </div>

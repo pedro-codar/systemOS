@@ -9,6 +9,7 @@ type KnowledgeEntryRow = {
   knowledge_category_id: number;
   content_plain: string;
   updated_at: string;
+  pdf_url: string | null;
 };
 
 export function mapKnowledgeEntry(row: KnowledgeEntryRow): KnowledgeEntries {
@@ -19,6 +20,7 @@ export function mapKnowledgeEntry(row: KnowledgeEntryRow): KnowledgeEntries {
     knowledge_category_id: String(row.knowledge_category_id),
     content_plain: row.content_plain,
     updated_at: new Date(row.updated_at),
+    pdf_url: row.pdf_url,
   };
 }
 
@@ -28,7 +30,9 @@ export async function GetKnowledgeEntries(
 ) {
   const { data, error } = await supabase
     .from("knowledge_entries")
-    .select("id, created_at, company_id, knowledge_category_id, content_plain, updated_at")
+    .select(
+      "id, created_at, company_id, knowledge_category_id, content_plain, updated_at, pdf_url",
+    )
     .eq("company_id", companyId)
     .order("created_at", { ascending: true });
 
@@ -43,6 +47,7 @@ export async function CreateKnowledgeEntrie(
   knowledge_category_id: string,
   content_plain: string,
   updated_at: Date,
+  pdf_url?: string | null,
 ) {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -52,6 +57,7 @@ export async function CreateKnowledgeEntrie(
       knowledge_category_id,
       content_plain,
       updated_at: updated_at.toISOString(),
+      pdf_url: pdf_url ?? null,
     })
     .select("id")
     .single();
@@ -63,14 +69,25 @@ export async function UpdateKnowledgeEntrie(
   entry_id: string,
   content_plain: string,
   updated_at: Date,
+  pdf_url?: string | null,
 ) {
   const supabase = createClient();
+  const payload: {
+    content_plain: string;
+    updated_at: string;
+    pdf_url?: string | null;
+  } = {
+    content_plain,
+    updated_at: updated_at.toISOString(),
+  };
+
+  if (pdf_url !== undefined) {
+    payload.pdf_url = pdf_url;
+  }
+
   const { data, error } = await supabase
     .from("knowledge_entries")
-    .update({
-      content_plain,
-      updated_at: updated_at.toISOString(),
-    })
+    .update(payload)
     .eq("id", entry_id)
     .select("id")
     .single();

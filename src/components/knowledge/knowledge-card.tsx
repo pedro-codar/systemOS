@@ -4,11 +4,17 @@ import { getCategoryContentLabel } from "./types";
 type KnowledgeCardProps = {
   category: KnowledgeCategory;
   content?: string;
+  pdfUrl?: string | null;
   onClick: () => void;
 };
 
-export function KnowledgeCard({ category, content, onClick }: KnowledgeCardProps) {
-  const contentLabel = getCategoryContentLabel(content);
+export function KnowledgeCard({
+  category,
+  content,
+  pdfUrl,
+  onClick,
+}: KnowledgeCardProps) {
+  const contentLabel = getCategoryContentLabel(content, pdfUrl);
 
   return (
     <button

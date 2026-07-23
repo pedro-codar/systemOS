@@ -7,8 +7,6 @@ import {
   Brain,
   MessagesSquare,
   UserPlus,
-  SquareCheckBig,
-  Plug2,
   Menu,
   X,
   type LucideIcon,
@@ -20,7 +18,7 @@ import { Logout } from "@/lib/lib-auth";
 import { toast } from "sonner";
 import { useAppContext } from "@/context/app-context";
 
-type SidebarItem = "chat" | "knowledge" | "collaborators" | "tasks" | "integrations";
+type SidebarItem = "chat" | "knowledge" | "collaborators";
 
 type SidebarProps = {
   activeItem: SidebarItem;
@@ -52,18 +50,6 @@ const navItems: {
     href: "/collaborators",
     icon: UserPlus,
     adminOnly: true,
-  },
-  {
-    id: "tasks",
-    label: "Tarefas",
-    href: "/tasks",
-    icon: SquareCheckBig,
-  },
-  {
-    id: "integrations",
-    label: "Integrações",
-    href: "/integrations",
-    icon: Plug2,
   },
 ];
 
