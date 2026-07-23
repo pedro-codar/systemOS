@@ -1,4 +1,3 @@
-import { Sidebar } from "@/components/shared/sidebar";
 import { TasksBoard } from "@/components/tasks/tasks-board";
 import type { Task, TaskAssignee } from "@/components/tasks/types";
 import { GetTaskAssignees, GetTasks } from "@/lib/lib-task";
@@ -50,7 +49,6 @@ export default async function TasksPage() {
 
   return (
     <div className="bg-background flex h-dvh overflow-hidden">
-      <Sidebar activeItem="tasks" />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 items-start justify-between gap-4 px-4 pt-14 pb-3 sm:items-center sm:px-6 sm:py-4 sm:pt-4">
